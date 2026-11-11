@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fiumi e fossi – Viareggio, Massarosa, Vecchiano</title>
+<meta name="theme-color" content="#E3001B">
+<meta name="description" content="Livelli idrometrici in tempo reale per Viareggio, Massarosa e Vecchiano da dati CFR Toscana. App non ufficiale.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --rosso:#E3001B; --rosso-scuro:#B30015;
+  --testo:#1A1C1E; --testo-2:#5B6168; --bordo:#D9DCE0;
+  --fondo:#F2F3F5; --carta:#FFFFFF;
+  --acqua:#0B5FA5; --acqua-chiara:rgba(11,95,165,.18);
+  --ok:#1E7D45; --attenzione:#C77700; --allarme:#E3001B;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --testo:#ECEEF0; --testo-2:#A4AAB1; --bordo:#33383E;
+    --fondo:#15181B; --carta:#1E2226;
+    --acqua:#5AA7EA; --acqua-chiara:rgba(90,167,234,.22);
+    --ok:#4CC27A; --attenzione:#F2A33A; --allarme:#FF4D5E;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-family:"Titillium Web",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--testo);font-size:17px;line-height:1.45}
+.istituzionale{background:var(--rosso);color:#fff;font-size:14px;padding:6px 16px}
+.istituzionale span{opacity:.85}
+header.testata{background:var(--carta);border-bottom:1px solid var(--bordo);padding:18px 16px 16px}
+.wrap{max-width:1100px;margin:0 auto}
+.testata .wrap{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:clamp(1.6rem,5vw,2.3rem);line-height:1.1;margin:0;font-weight:700}
+h1 small{display:block;font-size:1rem;font-weight:400;color:var(--testo-2);margin-top:6px}
+.azioni{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+button.aggiorna{font:inherit;font-weight:700;background:var(--rosso);color:#fff;border:0;border-radius:4px;padding:10px 18px;display:inline-flex;gap:8px;align-items:center;cursor:pointer;min-height:44px}
+button.aggiorna:hover{background:var(--rosso-scuro)}
+button.aggiorna:disabled{opacity:.6;cursor:progress}
+button:focus-visible{outline:3px solid var(--acqua);outline-offset:2px}
+.aggiorna svg{width:18px;height:18px}
+.aggiorna.gira svg{animation:gira 1s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.aggiorna.gira svg{animation:none}}
+.ultimo{font-size:14px;color:var(--testo-2)}
+main{padding:16px}
+.filtri{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 18px}
+.filtri button{font:inherit;font-size:15px;background:var(--carta);color:var(--testo);border:1px solid var(--bordo);border-radius:999px;padding:6px 14px;min-height:38px;cursor:pointer}
+.filtri button[aria-pressed="true"]{background:var(--testo);color:var(--carta);border-color:var(--testo)}
+.messaggio{background:var(--carta);border-left:4px solid var(--rosso);padding:14px 16px;margin-bottom:18px}
+.messaggio[hidden]{display:none}
+h2{font-size:1.3rem;margin:28px 0 10px;font-weight:700}
+.griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.stazione{background:var(--carta);border:1px solid var(--bordo);border-top:4px solid var(--stato,var(--bordo));padding:14px 14px 10px;display:grid;grid-template-columns:1fr 64px;gap:4px 14px}
+.stazione h3{margin:0;font-size:1.15rem;line-height:1.2}
+.stazione .fiume{color:var(--testo-2);font-size:15px}
+.stazione .comuni{font-size:13px;color:var(--testo-2);margin-top:2px}
+.livello{font-size:2.4rem;font-weight:700;line-height:1;margin:12px 0 2px;font-variant-numeric:tabular-nums}
+.livello small{font-size:1rem;font-weight:400;color:var(--testo-2)}
+.stato{display:inline-block;font-size:14px;font-weight:600;color:var(--stato,var(--testo-2))}
+.delta{display:flex;gap:12px;font-size:14px;margin-top:10px;font-variant-numeric:tabular-nums}
+.delta div{display:flex;flex-direction:column}
+.delta b{font-weight:600;font-size:15px}
+.delta span{color:var(--testo-2);font-size:12px}
+.meta{font-size:13px;color:var(--testo-2);margin-top:8px}
+.meta .vecchio{color:var(--attenzione);font-weight:600}
+.asta{grid-row:1 / span 5;grid-column:2;align-self:start}
+.asta text{font-size:9px;fill:var(--testo-2);font-family:inherit}
+.stazione details{grid-column:1 / -1;border-top:1px solid var(--bordo);margin-top:10px;padding-top:6px}
+.stazione summary{cursor:pointer;font-weight:600;color:var(--acqua);padding:6px 0;min-height:36px}
+.grafico-stazione{position:relative;height:220px}
+.pannello{background:var(--carta);border:1px solid var(--bordo);padding:14px}
+.pannello p.spiega{margin:0 0 10px;color:var(--testo-2);font-size:15px;max-width:70ch}
+.grafico-alto{position:relative;height:300px}
+.legenda-asta{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--testo-2);margin-top:8px}
+.legenda-asta i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px}
+.guida{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.guida div{background:var(--carta);border:1px solid var(--bordo);padding:14px}
+.guida h3{margin:0 0 6px;font-size:1.05rem}
+.guida p{margin:0;font-size:15px;color:var(--testo-2)}
+footer{padding:24px 16px 40px;font-size:14px;color:var(--testo-2)}
+footer a{color:var(--acqua)}
+.vuoto{color:var(--testo-2);font-style:italic}
+</style>
+</head>
+<body>
+<div class="istituzionale"><div class="wrap">Toscana <span>– monitoraggio idrometrico, app non ufficiale su dati del Centro Funzionale Regionale</span></div></div>
+
+<header class="testata">
+  <div class="wrap">
+    <h1>Fiumi, canali e lago<small>Viareggio, Massarosa e Vecchiano</small></h1>
+    <div class="azioni">
+      <button class="aggiorna" id="btnAggiorna" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+        Aggiorna dati
+      </button>
+      <div class="ultimo" id="ultimo">Dati non ancora caricati</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="filtri" role="group" aria-label="Filtra per comune">
+      <button type="button" data-comune="" aria-pressed="true">Tutti</button>
+      <button type="button" data-comune="Viareggio" aria-pressed="false">Viareggio</button>
+      <button type="button" data-comune="Massarosa" aria-pressed="false">Massarosa</button>
+      <button type="button" data-comune="Vecchiano" aria-pressed="false">Vecchiano</button>
+    </div>
+
+    <div class="messaggio" id="messaggio" hidden></div>
+
+    <h2>Stazioni</h2>
+    <div class="griglia" id="griglia"><p class="vuoto">Caricamento in corso…</p></div>
+    <div class="legenda-asta">
+      <span><i style="background:var(--acqua)"></i>livello attuale</span>
+      <span><i style="background:var(--attenzione)"></i>1ª soglia</span>
+      <span><i style="background:var(--allarme)"></i>2ª soglia</span>
+    </div>
+
+    <h2>Come sta cambiando il livello</h2>
+    <div class="pannello">
+      <p class="spiega">Variazione del livello rispetto a 1, 3 e 6 ore fa. Barre sopra lo zero: l’acqua sta salendo. Sotto lo zero: sta scendendo.</p>
+      <div class="grafico-alto"><canvas id="gDelta" aria-label="Grafico variazioni di livello"></canvas></div>
+    </div>
+
+    <h2>Margine dalla prima soglia</h2>
+    <div class="pannello">
+      <p class="spiega">Quanti centimetri mancano alla 1ª soglia di criticità. Un valore positivo significa che la soglia è già superata. Compaiono solo le stazioni per cui il CFR pubblica le soglie.</p>
+      <div class="grafico-alto"><canvas id="gMargine" aria-label="Grafico margine dalla soglia"></canvas></div>
+    </div>
+
+    <h2>Come leggere i dati</h2>
+    <div class="guida">
+      <div><h3>Zero idrometrico</h3><p>Il livello è in metri sopra lo zero idrometrico (m szi), una quota convenzionale diversa per ogni stazione. Un valore negativo non è un errore e non indica il fondo dell’alveo.</p></div>
+      <div><h3>Soglie</h3><p>La 1ª e la 2ª soglia sono i livelli di riferimento del CFR per la valutazione della criticità idraulica. Le allerte ufficiali restano quelle emesse dalla Regione e dalla Protezione civile.</p></div>
+      <div><h3>Burlamacca e mare</h3><p>Il canale Burlamacca collega il lago di Massaciuccoli al mare: con mareggiate o mare grosso il deflusso rallenta e il livello può salire anche senza pioggia.</p></div>
+      <div><h3>Ora solare</h3><p>Il CFR pubblica gli orari sempre in ora solare. La pagina li converte nell’ora del tuo dispositivo.</p></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    Fonte: <a href="https://www.cfr.toscana.it/" rel="noopener">Centro Funzionale Regione Toscana</a> – dati in tempo reale non validati. Questa pagina non è un servizio ufficiale della Regione Toscana. I fossi minori del Consorzio di Bonifica Toscana Nord non hanno dati pubblici.
+  </div>
+</footer>
+
+<script>
+(() => {
+  const ENDPOINT = '/.netlify/functions/idrometri';
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const fmt = (n, d = 2) => n === null || n === undefined || isNaN(n) ? '–' : n.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtSegno = (n) => n === null || n === undefined ? '–' : (n > 0 ? '+' : '') + fmt(n);
+  const fmtOra = (iso) => new Date(iso).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+  let dati = null, filtro = '';
+  const grafici = {};
+
+  const $ = (id) => document.getElementById(id);
+  const btn = $('btnAggiorna');
+
+  function stato(s) {
+    if (s.livello === null) return { testo: 'Dato non disponibile', col: '--testo-2' };
+    if (s.liv2 !== null && s.livello >= s.liv2) return { testo: 'Oltre la 2ª soglia', col: '--allarme' };
+    if (s.liv1 !== null && s.livello >= s.liv1) return { testo: 'Oltre la 1ª soglia', col: '--attenzione' };
+    if (s.liv1 === null && s.liv2 === null) return { testo: 'Soglie non pubblicate', col: '--testo-2' };
+    return { testo: 'Sotto le soglie', col: '--ok' };
+  }
+
+  // Delta dalla serie quando la tabella non li fornisce
+  function deltaDaSerie(s, ore) {
+    if (!s.serie?.length) return null;
+    const ultimo = s.serie.at(-1);
+    const target = new Date(ultimo.t).getTime() - ore * 3600e3;
+    let best = null;
+    for (const p of s.serie) {
+      const dt = Math.abs(new Date(p.t).getTime() - target);
+      if (dt <= 20 * 60e3 && (!best || dt < best.dt)) best = { p, dt };
+    }
+    return best ? Math.round((ultimo.l - best.p.l) * 100) / 100 : null;
+  }
+  const delta = (s, ore) => s['dh' + ore] ?? deltaDaSerie(s, ore);
+
+  // Asta idrometrica: scala graduata con acqua e soglie
+  function asta(s) {
+    const H = 170, W = 64, top = 8, bot = H - 8;
+    const valori = [s.livello, s.liv1, s.liv2, ...(s.serie || []).map((p) => p.l)].filter((v) => v !== null && !isNaN(v));
+    if (!valori.length) return '';
+    let min = Math.min(...valori), max = Math.max(...valori);
+    const pad = Math.max((max - min) * 0.15, 0.1);
+    min -= pad; max += pad;
+    const y = (v) => bot - ((v - min) / (max - min)) * (bot - top);
+    const passo = (max - min) > 2 ? 0.5 : (max - min) > 0.8 ? 0.2 : 0.1;
+    let tacche = '';
+    for (let v = Math.ceil(min / passo) * passo; v <= max; v += passo) {
+      const yy = y(v).toFixed(1);
+      tacche += `<line x1="14" x2="22" y1="${yy}" y2="${yy}" stroke="currentColor" stroke-width="1"/><text x="25" y="${+yy + 3}">${fmt(v, passo < 0.2 ? 1 : 1)}</text>`;
+    }
+    const soglia = (v, col) => v === null ? '' : `<line x1="2" x2="${W - 2}" y1="${y(v)}" y2="${y(v)}" stroke="var(${col})" stroke-width="2.5" stroke-dasharray="4 3"/>`;
+    const lv = s.livello !== null ? y(s.livello) : bot;
+    return `<svg class="asta" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Asta idrometrica: livello ${fmt(s.livello)} metri" style="color:var(--bordo)">
+      <rect x="2" y="${top}" width="12" height="${bot - top}" fill="var(--fondo)" stroke="var(--bordo)"/>
+      <rect x="2" y="${lv}" width="12" height="${bot - lv}" fill="var(--acqua)"/>
+      <line x1="2" x2="${W - 2}" y1="${lv}" y2="${lv}" stroke="var(--acqua)" stroke-width="2"/>
+      ${tacche}${soglia(s.liv1, '--attenzione')}${soglia(s.liv2, '--allarme')}
+    </svg>`;
+  }
+
+  function stazioniVisibili() {
+    if (!dati) return [];
+    return dati.stazioni.filter((s) => !filtro || s.comuni.includes(filtro));
+  }
+
+  function renderCard(s) {
+    const st = stato(s);
+    const vecchio = s.data && (Date.now() - new Date(s.data).getTime()) > 3 * 3600e3;
+    const portata = s.portata !== null && s.portata !== undefined ? `<div><b>${fmt(s.portata, 1)}</b><span>m³/s</span></div>` : '';
+    const el = document.createElement('article');
+    el.className = 'stazione';
+    el.style.setProperty('--stato', `var(${st.col})`);
+    el.innerHTML = `
+      <div>
+        <h3>${s.stazione}</h3>
+        <div class="fiume">${s.fiume}</div>
+        <div class="comuni">${s.comuni.join(', ')}</div>
+      </div>
+      <div class="livello">${fmt(s.livello)} <small>m szi</small></div>
+      <div class="stato">${st.testo}</div>
+      <div class="delta">
+        <div><b>${fmtSegno(delta(s, 1))}</b><span>in 1 ora</span></div>
+        <div><b>${fmtSegno(delta(s, 3))}</b><span>in 3 ore</span></div>
+        <div><b>${fmtSegno(delta(s, 6))}</b><span>in 6 ore</span></div>
+        ${portata}
+      </div>
+      <div class="meta">${s.data ? `Dato delle ${fmtOra(s.data)}` : 'Orario non disponibile'}${vecchio ? ' <span class="vecchio">– dato non recente</span>' : ''}${s.liv1 !== null ? `<br>Soglie: ${fmt(s.liv1)} / ${fmt(s.liv2)} m` : ''}<br>Codice ${s.id}</div>
+      ${asta(s)}
+      <details><summary>Mostra andamento</summary><div class="grafico-stazione"><canvas aria-label="Andamento livello ${s.stazione}"></canvas></div></details>`;
+    const det = el.querySelector('details');
+    det.addEventListener('toggle', () => { if (det.open) graficoStazione(s, det.querySelector('canvas')); });
+    return el;
+  }
+
+  function opzioniBase() {
+    return {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { labels: { color: css('--testo-2'), font: { family: 'Titillium Web' }, boxWidth: 14 } } },
+      scales: {
+        x: { ticks: { color: css('--testo-2'), maxRotation: 0, autoSkipPadding: 14 }, grid: { color: css('--bordo') } },
+        y: { ticks: { color: css('--testo-2') }, grid: { color: css('--bordo') } },
+      },
+    };
+  }
+
+  function graficoStazione(s, canvas) {
+    if (!window.Chart || !s.serie?.length) { canvas.parentElement.innerHTML = '<p class="vuoto">Serie storica non disponibile.</p>'; return; }
+    grafici[s.id]?.destroy();
+    const etichette = s.serie.map((p) => fmtOra(p.t));
+    const linea = (v, lab, col) => ({ label: lab, data: s.serie.map(() => v), borderColor: css(col), borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false });
+    const ds = [{
+      label: 'Livello (m szi)', data: s.serie.map((p) => p.l), borderColor: css('--acqua'), backgroundColor: css('--acqua-chiara'),
+      fill: 'start', borderWidth: 2, pointRadius: 0, tension: 0.2,
+    }];
+    if (s.liv1 !== null) ds.push(linea(s.liv1, '1ª soglia', '--attenzione'));
+    if (s.liv2 !== null) ds.push(linea(s.liv2, '2ª soglia', '--allarme'));
+    const o = opzioniBase();
+    o.interaction = { mode: 'index', intersect: false };
+    grafici[s.id] = new Chart(canvas, { type: 'line', data: { labels: etichette, datasets: ds }, options: o });
+  }
+
+  function graficoDelta(lista) {
+    grafici.delta?.destroy();
+    if (!window.Chart) return;
+    const o = opzioniBase();
+    o.indexAxis = 'y';
+    o.scales.x.title = { display: true, text: 'metri', color: css('--testo-2') };
+    const serie = (ore, col) => ({ label: `in ${ore} ${ore === 1 ? 'ora' : 'ore'}`, data: lista.map((s) => delta(s, ore)), backgroundColor: col });
+    grafici.delta = new Chart($('gDelta'), {
+      type: 'bar',
+      data: {
+        labels: lista.map((s) => s.stazione),
+        datasets: [serie(1, css('--acqua')), serie(3, css('--testo-2')), serie(6, css('--bordo'))],
+      },
+      options: o,
+    });
+  }
+
+  function graficoMargine(lista) {
+    grafici.margine?.destroy();
+    const conSoglia = lista.filter((s) => s.liv1 !== null && s.livello !== null);
+    const box = $('gMargine').parentElement;
+    if (!conSoglia.length) { box.style.height = 'auto'; box.querySelector('p')?.remove(); box.insertAdjacentHTML('beforeend', '<p class="vuoto">Nessuna stazione selezionata ha soglie pubblicate.</p>'); return; }
+    box.querySelector('p')?.remove(); box.style.height = '';
+    if (!window.Chart) return;
+    const valori = conSoglia.map((s) => Math.round((s.livello - s.liv1) * 100));
+    const o = opzioniBase();
+    o.indexAxis = 'y';
+    o.plugins.legend.display = false;
+    o.scales.x.title = { display: true, text: 'centimetri dalla 1ª soglia', color: css('--testo-2') };
+    grafici.margine = new Chart($('gMargine'), {
+      type: 'bar',
+      data: { labels: conSoglia.map((s) => s.stazione), datasets: [{ data: valori, backgroundColor: valori.map((v) => v >= 0 ? css('--allarme') : css('--ok')) }] },
+      options: o,
+    });
+  }
+
+  function render() {
+    const lista = stazioniVisibili();
+    const g = $('griglia');
+    g.innerHTML = '';
+    if (!lista.length) g.innerHTML = '<p class="vuoto">Nessuna stazione disponibile per questo filtro.</p>';
+    lista.forEach((s) => g.appendChild(renderCard(s)));
+    graficoDelta(lista);
+    graficoMargine(lista);
+  }
+
+  async function carica() {
+    btn.disabled = true; btn.classList.add('gira');
+    $('messaggio').hidden = true;
+    try {
+      const r = await fetch(`${ENDPOINT}?t=${Date.now()}`, { cache: 'no-store' });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.errore || `Errore HTTP ${r.status}`);
+      if (!j.stazioni?.length) throw new Error('Il CFR non ha restituito stazioni per questa zona. Controlla /.netlify/functions/idrometri?raw=1');
+      dati = j;
+      $('ultimo').textContent = `Aggiornato alle ${new Date(j.aggiornato).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`;
+      render();
+    } catch (e) {
+      const m = $('messaggio');
+      m.hidden = false;
+      m.textContent = `Dati non caricati: ${e.message}. La pagina deve essere servita da Netlify insieme alla function idrometri.`;
+      if (!dati) $('griglia').innerHTML = '';
+    } finally {
+      btn.disabled = false; btn.classList.remove('gira');
+    }
+  }
+
+  document.querySelectorAll('.filtri button').forEach((b) => b.addEventListener('click', () => {
+    filtro = b.dataset.comune;
+    document.querySelectorAll('.filtri button').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    render();
+  }));
+  btn.addEventListener('click', carica);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => dati && render());
+  carica();
+})();
+</script>
+</body>
+</html>
