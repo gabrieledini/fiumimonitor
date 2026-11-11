@@ -1,10 +1,10 @@
-// Proxy CFR/SIR Toscana → JSON per le stazioni di Viareggio, Massarosa, Vecchiano.
+// Proxy CFR/SIR Toscana → JSON per le stazioni di Viareggio, Massarosa, Vecchiano, Carrara.
 // GET /.netlify/functions/idrometri         → dati normalizzati + serie storiche
 // GET /.netlify/functions/idrometri?raw=1   → array grezzi letti dalle pagine (debug)
 
 const HOSTS = ['https://www.cfr.toscana.it', 'https://www.sir.toscana.it'];
 const UA = 'Mozilla/5.0 (compatible; IdrometriVersilia/1.0)';
-const LUOGHI = /viareggio|torre del lago|massarosa|massaciuccoli|quiesa|stiava|bozzano|vecchiano|migliarino|nodica|filettole|ripafratta|burlamacca/i;
+const LUOGHI = /carrara|avenza|carrione|viareggio|torre del lago|massarosa|massaciuccoli|quiesa|stiava|bozzano|vecchiano|migliarino|nodica|filettole|ripafratta|burlamacca/i;
 const DATA_RE = /(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2})[.:](\d{2})/;
 
 async function getText(path) {
@@ -60,6 +60,7 @@ function toISO(s) {
 
 function comuniDi(fiume, stazione) {
   const t = `${fiume} ${stazione}`;
+  if (/carrara|avenza|carrione/i.test(t)) return ['Carrara'];
   if (/massaciuccoli/i.test(t)) return ['Viareggio', 'Massarosa', 'Vecchiano'];
   if (/serchio|vecchiano|migliarino|nodica|filettole|ripafratta/i.test(t)) return ['Vecchiano'];
   if (/massarosa|quiesa|stiava|bozzano/i.test(t)) return ['Massarosa'];
@@ -115,7 +116,7 @@ exports.handler = async (event) => {
   try {
     const { host, text } = await getText('/monitoraggio/stazioni.php?type=idro');
     const locali = parseTabella(text).filter((s) => {
-      if (!['LU', 'PI'].includes(s.prov)) return false;
+      if (!['LU', 'PI', 'MS'].includes(s.prov)) return false;
       const t = `${s.fiume} ${s.stazione}`;
       return LUOGHI.test(t) || (/serchio/i.test(s.fiume) && /foce/i.test(s.stazione));
     });
