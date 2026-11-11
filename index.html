@@ -3,9 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fiumi e fossi – Viareggio, Massarosa, Vecchiano</title>
+<title>Fiumi e fossi – Viareggio, Massarosa, Vecchiano, Carrara</title>
 <meta name="theme-color" content="#E3001B">
-<meta name="description" content="Livelli idrometrici in tempo reale per Viareggio, Massarosa e Vecchiano da dati CFR Toscana. App non ufficiale.">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Idrometri">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Livelli idrometrici in tempo reale per Viareggio, Massarosa, Vecchiano e Carrara da dati CFR Toscana. App non ufficiale.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
@@ -93,7 +99,7 @@ footer a{color:var(--acqua)}
 
 <header class="testata">
   <div class="wrap">
-    <h1>Fiumi, canali e lago<small>Viareggio, Massarosa e Vecchiano</small></h1>
+    <h1>Fiumi, canali e lago<small>Viareggio, Massarosa, Vecchiano e Carrara</small></h1>
     <div class="azioni">
       <button class="aggiorna" id="btnAggiorna" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
@@ -107,10 +113,11 @@ footer a{color:var(--acqua)}
 <main>
   <div class="wrap">
     <div class="filtri" role="group" aria-label="Filtra per comune">
-      <button type="button" data-comune="" aria-pressed="true">Tutti</button>
-      <button type="button" data-comune="Viareggio" aria-pressed="false">Viareggio</button>
+      <button type="button" data-comune="" aria-pressed="false">Tutti</button>
+      <button type="button" data-comune="Viareggio" aria-pressed="true">Viareggio</button>
       <button type="button" data-comune="Massarosa" aria-pressed="false">Massarosa</button>
       <button type="button" data-comune="Vecchiano" aria-pressed="false">Vecchiano</button>
+      <button type="button" data-comune="Carrara" aria-pressed="false">Carrara</button>
     </div>
 
     <div class="messaggio" id="messaggio" hidden></div>
@@ -159,7 +166,7 @@ footer a{color:var(--acqua)}
   const fmtSegno = (n) => n === null || n === undefined ? '–' : (n > 0 ? '+' : '') + fmt(n);
   const fmtOra = (iso) => new Date(iso).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
-  let dati = null, filtro = '';
+  let dati = null, filtro = 'Viareggio';
   const grafici = {};
 
   const $ = (id) => document.getElementById(id);
