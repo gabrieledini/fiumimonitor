@@ -1,9 +1,7 @@
 name: Aggiorna elenco località
 
 on:
-  schedule:
-    - cron: '0 3 * * 1'   # ogni lunedì alle 03:00 UTC
-  workflow_dispatch:       # avvio manuale da GitHub
+  workflow_dispatch:   # solo avvio manuale
 
 permissions:
   contents: write
