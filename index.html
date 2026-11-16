@@ -160,6 +160,7 @@ footer a{color:var(--acqua)}
 <script>
 (() => {
   const ENDPOINT = '/.netlify/functions/idrometri';
+  const ELENCO = '/localita.json';   // generato dal workflow GitHub "Aggiorna elenco località"
   const PROVINCE = { AR: 'Arezzo', FI: 'Firenze', GR: 'Grosseto', LI: 'Livorno', LU: 'Lucca', MS: 'Massa-Carrara', PI: 'Pisa', PO: 'Prato', PT: 'Pistoia', SI: 'Siena' };
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
   const fmt = (n, d = 2) => n === null || n === undefined || isNaN(n) ? '–' : n.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -197,9 +198,9 @@ footer a{color:var(--acqua)}
   // ---------- Elenco località ----------
   async function caricaElenco() {
     try {
-      const r = await fetch(ENDPOINT);
+      const r = await fetch(ELENCO, { cache: 'no-cache' });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j.stazioni?.length) throw new Error(j.errore || 'elenco stazioni vuoto');
+      if (!r.ok || !j.stazioni?.length) throw new Error(r.ok ? 'elenco stazioni vuoto' : `${ELENCO} non trovato`);
       localita = new Map();
       for (const s of j.stazioni) {
         const k = `${s.prov}|${s.localita}`;
@@ -220,7 +221,7 @@ footer a{color:var(--acqua)}
       messaggio('');
     } catch (e) {
       sel.innerHTML = '<option value="">Elenco non disponibile</option>';
-      messaggio(`Elenco località non caricato: ${e.message}. La pagina deve essere servita da Netlify con la function idrometri.`);
+      messaggio(`Elenco località non caricato: ${e.message}. Avvia il workflow «Aggiorna elenco località» su GitHub per generare localita.json.`);
     }
   }
 

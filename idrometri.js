@@ -1,5 +1,4 @@
 // Proxy CFR/SIR Toscana → JSON
-// GET /.netlify/functions/idrometri                 → elenco stazioni idrometriche con località (leggero)
 // GET /.netlify/functions/idrometri?ids=TOS..,TOS.. → dati attuali + serie delle stazioni richieste (solo quelle con dati)
 // GET /.netlify/functions/idrometri?raw=1           → righe grezze della tabella CFR (debug)
 
@@ -99,6 +98,11 @@ const json = (status, body, cache = 'no-store') => ({
   body: JSON.stringify(body),
 });
 
+// Riutilizzati da scripts/genera-localita.js
+exports.getText = getText;
+exports.parseTabella = parseTabella;
+exports.localitaDi = localitaDi;
+
 exports.handler = async (event) => {
   const q = event.queryStringParameters || {};
   try {
@@ -107,13 +111,7 @@ exports.handler = async (event) => {
 
     if (q.raw) return json(200, { host, righe: tabella.slice(0, 20).map((s) => s._raw) });
 
-    // Elenco località
-    if (!q.ids) {
-      const stazioni = tabella.map((s) => ({
-        id: s.id, fiume: s.fiume, stazione: s.stazione, prov: s.prov, localita: localitaDi(s.stazione),
-      }));
-      return json(200, { fonte: host, stazioni }, 'public, max-age=3600');
-    }
+    if (!q.ids) return json(400, { errore: 'Parametro ids mancante' });
 
     // Dati delle stazioni richieste
     const ids = [...new Set(q.ids.split(',').map((x) => x.trim().toUpperCase()))].filter((x) => /^TOS\d+$/.test(x)).slice(0, 20);
