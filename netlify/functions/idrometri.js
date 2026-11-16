@@ -1,11 +1,11 @@
-// Proxy CFR/SIR Toscana → JSON per le stazioni di Viareggio, Massarosa, Vecchiano, Carrara.
-// GET /.netlify/functions/idrometri         → dati normalizzati + serie storiche
-// GET /.netlify/functions/idrometri?raw=1   → array grezzi letti dalle pagine (debug)
+// Proxy CFR/SIR Toscana → JSON
+// GET /.netlify/functions/idrometri?ids=TOS..,TOS.. → dati attuali + serie delle stazioni richieste (solo quelle con dati)
+// GET /.netlify/functions/idrometri?raw=1           → righe grezze della tabella CFR (debug)
 
 const HOSTS = ['https://www.cfr.toscana.it', 'https://www.sir.toscana.it'];
-const UA = 'Mozilla/5.0 (compatible; IdrometriVersilia/1.0)';
-const LUOGHI = /carrara|avenza|carrione|viareggio|torre del lago|massarosa|massaciuccoli|quiesa|stiava|bozzano|vecchiano|migliarino|nodica|filettole|ripafratta|burlamacca/i;
+const UA = 'Mozilla/5.0 (compatible; IdrometriToscana/1.0)';
 const DATA_RE = /(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2})[.:](\d{2})/;
+const DATA_TAB_RE = /^\d{2}\/\d{2}(\/\d{4})?\s+\d{2}[.:]\d{2}$/;
 
 async function getText(path) {
   let lastErr;
@@ -40,7 +40,6 @@ function num(s) {
   return m ? parseFloat(m[0]) : null;
 }
 
-// Estrae tutti i "new Array(...)" con argomenti stringa
 function parseArrays(html) {
   const out = [];
   const re = /new\s+Array\s*\(([\s\S]*?)\)\s*;/g;
@@ -58,30 +57,21 @@ function toISO(s) {
   return m ? `${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:00+01:00` : null;
 }
 
-function comuniDi(fiume, stazione) {
-  const t = `${fiume} ${stazione}`;
-  if (/carrara|avenza|carrione/i.test(t)) return ['Carrara'];
-  if (/massaciuccoli/i.test(t)) return ['Viareggio', 'Massarosa', 'Vecchiano'];
-  if (/serchio|vecchiano|migliarino|nodica|filettole|ripafratta/i.test(t)) return ['Vecchiano'];
-  if (/massarosa|quiesa|stiava|bozzano/i.test(t)) return ['Massarosa'];
-  return ['Viareggio'];
-}
+// "Viareggio 1 (GPRS)" → "Viareggio"
+const localitaDi = (stazione) =>
+  stazione.replace(/\([^)]*\)/g, ' ').replace(/\s+\d+\s*$/, '').replace(/\s+/g, ' ').trim();
 
 function parseTabella(html) {
   return parseArrays(html)
     .filter((a) => /^TOS\d+$/i.test(a[0]) && a.length >= 6)
     .map((a) => {
       const [id, fiume, stazione, prov, zona] = a;
-      const dateIdx = a.findLastIndex((v, i) => i > 4 && DATA_RE.test(v) || (i > 4 && /^\d{2}\/\d{2}\s+\d{2}[.:]\d{2}$/.test(v)));
+      const dateIdx = a.findLastIndex((v, i) => i > 4 && DATA_TAB_RE.test(v));
       const vals = a.slice(5, dateIdx > 0 ? dateIdx : undefined);
       // Ordine colonne tabella CFR: liv.2, liv.1, livello, portata, Δh1, Δh3, Δh6
       const pos = vals.length === 7;
       return {
-        id: id.toUpperCase(),
-        fiume,
-        stazione,
-        prov: prov.toUpperCase(),
-        zona,
+        id: id.toUpperCase(), fiume, stazione, prov: prov.toUpperCase(), zona,
         liv2: pos ? num(vals[0]) : null,
         liv1: pos ? num(vals[1]) : null,
         livello: pos ? num(vals[2]) : null,
@@ -102,54 +92,50 @@ function parseSerie(html) {
     .sort((x, y) => x.t.localeCompare(y.t));
 }
 
-const json = (status, body) => ({
+const json = (status, body, cache = 'no-store') => ({
   statusCode: status,
-  headers: {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'no-store',
-    'Access-Control-Allow-Origin': '*',
-  },
+  headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': cache, 'Access-Control-Allow-Origin': '*' },
   body: JSON.stringify(body),
 });
 
+// Riutilizzati da scripts/genera-localita.js
+exports.getText = getText;
+exports.parseTabella = parseTabella;
+exports.localitaDi = localitaDi;
+
 exports.handler = async (event) => {
+  const q = event.queryStringParameters || {};
   try {
     const { host, text } = await getText('/monitoraggio/stazioni.php?type=idro');
-    const locali = parseTabella(text).filter((s) => {
-      if (!['LU', 'PI', 'MS'].includes(s.prov)) return false;
-      const t = `${s.fiume} ${s.stazione}`;
-      return LUOGHI.test(t) || (/serchio/i.test(s.fiume) && /foce/i.test(s.stazione));
-    });
+    const tabella = parseTabella(text);
 
-    if (event.queryStringParameters?.raw) {
-      const primo = locali[0];
-      const det = primo ? await getText(`/monitoraggio/dettaglio.php?id=${primo.id}&type=idro`) : null;
-      return json(200, {
-        host,
-        righeTabella: locali.map((s) => s._raw),
-        dettaglioEsempio: det ? parseArrays(det.text).slice(-5) : [],
-      });
-    }
+    if (q.raw) return json(200, { host, righe: tabella.slice(0, 20).map((s) => s._raw) });
 
-    const stazioni = await Promise.all(
-      locali.map(async (s) => {
+    if (!q.ids) return json(400, { errore: 'Parametro ids mancante' });
+
+    // Dati delle stazioni richieste
+    const ids = [...new Set(q.ids.split(',').map((x) => x.trim().toUpperCase()))].filter((x) => /^TOS\d+$/.test(x)).slice(0, 20);
+    const righe = ids.map((id) => tabella.find((s) => s.id === id)).filter(Boolean);
+
+    const stazioni = (await Promise.all(
+      righe.map(async (s) => {
         let serie = [];
         try {
           const det = await getText(`/monitoraggio/dettaglio.php?id=${s.id}&type=idro&${Date.now()}`);
           serie = parseSerie(det.text);
-        } catch (_) { /* serie non disponibile: resta il dato di tabella */ }
+        } catch (_) { /* serie non disponibile */ }
         const ultimo = serie.at(-1);
         const { _raw, ...rest } = s;
         return {
           ...rest,
+          localita: localitaDi(s.stazione),
           livello: ultimo ? ultimo.l : s.livello,
           portata: ultimo && ultimo.q !== null ? ultimo.q : s.portata,
           data: ultimo ? ultimo.t : null,
-          comuni: comuniDi(s.fiume, s.stazione),
           serie,
         };
       })
-    );
+    )).filter((s) => s.livello !== null);
 
     return json(200, { aggiornato: new Date().toISOString(), fonte: host, stazioni });
   } catch (e) {
