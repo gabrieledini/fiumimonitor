@@ -40,7 +40,9 @@ function coordDa(f) {
   if (!isFinite(x) || !isFinite(y)) return null;
   let c;
   if (Math.abs(x) <= 180 && Math.abs(y) <= 180) c = x > 30 ? { lat: x, lon: y } : { lat: y, lon: x }; // gradi, anche invertiti
-  else c = utmToLatLon(x > 1e6 ? x - 1e6 : x, y, 32); // UTM 32N o Gauss-Boaga fuso Ovest (approssimato)
+  else if (x > 2e6) c = utmToLatLon(x - 2020000, y, 33); // Gauss-Boaga fuso Est (Roma 40), approssimato
+  else if (x > 1e6) c = utmToLatLon(x - 1e6, y, 32);      // Gauss-Boaga fuso Ovest, approssimato
+  else c = utmToLatLon(x, y, 32);                          // UTM 32N
   return inToscana(c) ? { lat: +c.lat.toFixed(5), lon: +c.lon.toFixed(5) } : null;
 }
 
