@@ -1,1 +1,23 @@
+name: Aggiorna elenco località
 
+on:
+  workflow_dispatch:   # solo avvio manuale
+
+permissions:
+  contents: write
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/genera-localita.js
+      - name: Commit se cambiato
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add localita.json
+          git diff --cached --quiet || (git commit -m "Aggiorna elenco località CFR" && git push)
