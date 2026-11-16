@@ -1,5 +1,5 @@
 {
- "generato": "2026-11-16T08:08:48.334Z",
+ "generato": "2026-11-16T18:19:41.445Z",
  "fonte": "https://www.cfr.toscana.it",
  "stazioni": [
   {
@@ -1034,7 +1034,7 @@
   {
    "id": "TOS01005395",
    "fiume": "Cecina",
-   "stazione": "Montegemoli (RADIO)",
+   "stazione": "Montegemoli (GPRS)",
    "prov": "PI",
    "localita": "Montegemoli"
   },
