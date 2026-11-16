@@ -91,6 +91,15 @@ h2:first-child{margin-top:4px}
 footer{padding:24px 16px 40px;font-size:14px;color:var(--testo-2)}
 footer a{color:var(--acqua)}
 .vuoto{color:var(--testo-2);font-style:italic}
+button.secondario{font:inherit;font-weight:700;background:var(--carta);color:var(--rosso);border:2px solid var(--rosso);border-radius:4px;padding:8px 16px;display:inline-flex;gap:8px;align-items:center;cursor:pointer;min-height:44px}
+button.secondario[aria-expanded="true"]{background:var(--rosso);color:#fff}
+button.secondario:disabled{opacity:.5;cursor:not-allowed}
+.secondario svg{width:18px;height:18px}
+#mappa{height:min(60vh,460px);border:1px solid var(--bordo);background:var(--carta)}
+.leaflet-container{font-family:inherit}
+.popup h4{margin:0 0 2px;font-size:15px}
+.popup p{margin:0 0 8px;color:#5B6168;font-size:13px}
+.popup button{font:inherit;font-size:14px;font-weight:700;background:#E3001B;color:#fff;border:0;border-radius:4px;padding:6px 12px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -107,6 +116,10 @@ footer a{color:var(--acqua)}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
         Aggiorna dati
       </button>
+      <button class="secondario" id="btnMappa" type="button" aria-expanded="false" aria-controls="sezMappa" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+        Mappa stazioni
+      </button>
     </div>
     <div class="ultimo" id="ultimo" aria-live="polite"></div>
   </div>
@@ -115,6 +128,16 @@ footer a{color:var(--acqua)}
 <main>
   <div class="wrap">
     <div class="messaggio" id="messaggio" hidden></div>
+
+    <section id="sezMappa" hidden>
+      <h2>Stazioni idrometriche in Toscana</h2>
+      <div id="mappa" role="region" aria-label="Mappa delle stazioni idrometriche della Toscana"></div>
+      <div class="legenda">
+        <span><i style="border-color:var(--acqua);border-top-width:8px;width:8px;border-radius:50%"></i>stazione</span>
+        <span><i style="border-color:var(--rosso);border-top-width:8px;width:8px;border-radius:50%"></i>località scelta</span>
+        <span id="senzaCoord"></span>
+      </div>
+    </section>
 
     <div class="vuoto-iniziale" id="iniziale">Scegli una località per vedere i livelli delle sue stazioni idrometriche.</div>
 
@@ -169,7 +192,8 @@ footer a{color:var(--acqua)}
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = (id) => document.getElementById(id);
 
-  const sel = $('selLocalita'), btn = $('btnAggiorna');
+  const sel = $('selLocalita'), btn = $('btnAggiorna'), btnMappa = $('btnMappa');
+  let tutte = [], mappa = null, marcatori = [];
   let localita = new Map();   // "PROV|Località" → [id, ...]
   let dati = null;
   const grafici = {};
@@ -219,12 +243,82 @@ footer a{color:var(--acqua)}
             const n = st.length > 1 ? ` (${st.length} stazioni)` : '';
             return `<option value="${esc(k)}">${esc(k.split('|')[1])}${fiumi ? ' – ' + esc(fiumi) : ''}${n}</option>`;
           }).join('') + '</optgroup>').join('');
+      tutte = j.stazioni;
       sel.disabled = false;
+      btnMappa.disabled = false;
       messaggio('');
     } catch (e) {
       sel.innerHTML = '<option value="">Elenco non disponibile</option>';
       messaggio(`Elenco località non caricato: ${e.message}. Avvia il workflow «Aggiorna elenco località» su GitHub per generare localita.json.`);
     }
+  }
+
+  // ---------- Mappa (Leaflet caricato solo alla prima apertura) ----------
+  const TOSCANA = [[42.2, 9.6], [44.5, 12.4]];
+
+  function caricaLeaflet() {
+    if (window.L) return Promise.resolve();
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(css);
+    return new Promise((ok, ko) => {
+      const js = document.createElement('script');
+      js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+      js.onload = ok;
+      js.onerror = () => ko(new Error('libreria mappa non caricata'));
+      document.head.appendChild(js);
+    });
+  }
+
+  async function apriMappa() {
+    const aperta = btnMappa.getAttribute('aria-expanded') === 'true';
+    btnMappa.setAttribute('aria-expanded', String(!aperta));
+    $('sezMappa').hidden = aperta;
+    if (aperta) return;
+    if (mappa) { mappa.invalidateSize(); evidenzia(); return; }
+    try {
+      await caricaLeaflet();
+    } catch (e) {
+      messaggio(`Mappa non disponibile: ${e.message}.`);
+      return;
+    }
+    const geo = tutte.filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon));
+    const mancanti = tutte.length - geo.length;
+    $('senzaCoord').textContent = !geo.length
+      ? 'Nessuna stazione ha coordinate: rilancia il workflow per aggiornare localita.json.'
+      : mancanti ? `${mancanti} stazioni senza coordinate non compaiono.` : '';
+    mappa = L.map('mappa', { scrollWheelZoom: false, minZoom: 7, maxBounds: L.latLngBounds(TOSCANA).pad(0.3) });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(mappa);
+    mappa.fitBounds(TOSCANA);
+    marcatori = geo.map((s) => {
+      const k = `${s.prov}|${s.localita}`;
+      const m = L.circleMarker([s.lat, s.lon], { radius: 6, weight: 2, color: '#fff', fillColor: css('--acqua'), fillOpacity: 1 }).addTo(mappa);
+      m.bindPopup(`<div class="popup"><h4>${esc(s.stazione)}</h4><p>${esc(s.fiume)} – ${esc(PROVINCE[s.prov] || s.prov)}</p><button type="button" data-k="${esc(k)}">Mostra dati di ${esc(s.localita)}</button></div>`);
+      m._k = k;
+      return m;
+    });
+    mappa.on('popupopen', (e) => {
+      e.popup.getElement().querySelector('button')?.addEventListener('click', (ev) => {
+        sel.value = ev.currentTarget.dataset.k;
+        mappa.closePopup();
+        btn.disabled = false;
+        evidenzia();
+        caricaDati();
+      });
+    });
+    evidenzia();
+  }
+
+  function evidenzia() {
+    if (!mappa) return;
+    const k = sel.value, scelti = [];
+    marcatori.forEach((m) => {
+      const on = m._k === k;
+      m.setRadius(on ? 10 : 6).setStyle({ fillColor: on ? css('--rosso') : css('--acqua') });
+      if (on) { m.bringToFront(); scelti.push(m.getLatLng()); }
+    });
+    if (scelti.length) mappa.flyToBounds(L.latLngBounds(scelti).pad(0.5), { maxZoom: 12, duration: 0.6 });
   }
 
   // ---------- Dati località ----------
@@ -402,7 +496,8 @@ footer a{color:var(--acqua)}
     graficoMargine(lista);
   }
 
-  sel.addEventListener('change', () => { btn.disabled = !sel.value; if (sel.value) caricaDati(); });
+  sel.addEventListener('change', () => { btn.disabled = !sel.value; evidenzia(); if (sel.value) caricaDati(); });
+  btnMappa.addEventListener('click', apriMappa);
   btn.addEventListener('click', caricaDati);
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => dati?.stazioni.length && render());
   caricaElenco();
