@@ -1,0 +1,1725 @@
+{
+ "generato": "2026-11-16T20:19:10.126Z",
+ "fonte": "https://www.cfr.toscana.it",
+ "stazioni": [
+  {
+   "id": "TOS03004563",
+   "fiume": "Ambra",
+   "stazione": "Ambra (RADIO)",
+   "prov": "AR",
+   "localita": "Ambra",
+   "lat": 43.41512,
+   "lon": 11.60511
+  },
+  {
+   "id": "TOS01004568",
+   "fiume": "Ambra",
+   "stazione": "Bucine (RADIO)",
+   "prov": "AR",
+   "localita": "Bucine",
+   "lat": 43.48353,
+   "lon": 11.61868
+  },
+  {
+   "id": "TOS03004511",
+   "fiume": "Esse di Cortona",
+   "stazione": "Camucia (RADIO)",
+   "prov": "AR",
+   "localita": "Camucia",
+   "lat": 43.24834,
+   "lon": 11.99437
+  },
+  {
+   "id": "TOS03004515",
+   "fiume": "Esse",
+   "stazione": "Foiano (RADIO)",
+   "prov": "AR",
+   "localita": "Foiano",
+   "lat": 43.23582,
+   "lon": 11.79168
+  },
+  {
+   "id": "TOS03004517",
+   "fiume": "Allacciante di Sx",
+   "stazione": "Foiano SP28 (RADIO)",
+   "prov": "AR",
+   "localita": "Foiano SP28",
+   "lat": 43.23727,
+   "lon": 11.83035
+  },
+  {
+   "id": "TOS01004557",
+   "fiume": "Oreno",
+   "stazione": "Laterina (RADIO)",
+   "prov": "AR",
+   "localita": "Laterina",
+   "lat": 43.5104,
+   "lon": 11.70937
+  },
+  {
+   "id": "TOS01004571",
+   "fiume": "Arno",
+   "stazione": "Montevarchi (GPRS)",
+   "prov": "AR",
+   "localita": "Montevarchi",
+   "lat": 43.54121,
+   "lon": 11.56621
+  },
+  {
+   "id": "TOS19000702",
+   "fiume": "Tevere",
+   "stazione": "Pieve S. Stefano (GPRS)",
+   "prov": "AR",
+   "localita": "Pieve S. Stefano",
+   "lat": 43.66903,
+   "lon": 12.0428
+  },
+  {
+   "id": "TOS03004519",
+   "fiume": "Canale della Chiana",
+   "stazione": "Ponte di Cesa (RADIO)",
+   "prov": "AR",
+   "localita": "Ponte di Cesa",
+   "lat": 43.32028,
+   "lon": 11.83608
+  },
+  {
+   "id": "TOS01004521",
+   "fiume": "Canale della Chiana",
+   "stazione": "Ponte Ferrovia FI-Roma (GPRS)",
+   "prov": "AR",
+   "localita": "Ponte Ferrovia FI-Roma",
+   "lat": 43.46686,
+   "lon": 11.8244
+  },
+  {
+   "id": "TOS01004561",
+   "fiume": "Arno",
+   "stazione": "Ponte Romito (RADIO)",
+   "prov": "AR",
+   "localita": "Ponte Romito",
+   "lat": 43.50252,
+   "lon": 11.67573
+  },
+  {
+   "id": "TOS03004509",
+   "fiume": "Mucchia",
+   "stazione": "Ponte SP Lauretana (RADIO)",
+   "prov": "AR",
+   "localita": "Ponte SP Lauretana",
+   "lat": 43.2371,
+   "lon": 11.96079
+  },
+  {
+   "id": "TOS03006123",
+   "fiume": "Tevere",
+   "stazione": "Sansepolcro (RADIO)",
+   "prov": "AR",
+   "localita": "Sansepolcro",
+   "lat": 43.5653,
+   "lon": 12.1207
+  },
+  {
+   "id": "TOS01004379",
+   "fiume": "Arno",
+   "stazione": "Stia (GPRS)",
+   "prov": "AR",
+   "localita": "Stia",
+   "lat": 43.80051,
+   "lon": 11.7057
+  },
+  {
+   "id": "TOS01004411",
+   "fiume": "Arno",
+   "stazione": "Subbiano (GPRS)",
+   "prov": "AR",
+   "localita": "Subbiano",
+   "lat": 43.57168,
+   "lon": 11.86785
+  },
+  {
+   "id": "TOS03004575",
+   "fiume": "Ciuffenna",
+   "stazione": "Terranuova (RADIO)",
+   "prov": "AR",
+   "localita": "Terranuova",
+   "lat": 43.55613,
+   "lon": 11.59806
+  },
+  {
+   "id": "TOS01004611",
+   "fiume": "Sieve",
+   "stazione": "Bilancino (RADIO)",
+   "prov": "FI",
+   "localita": "Bilancino",
+   "lat": 43.97497,
+   "lon": 11.28982
+  },
+  {
+   "id": "TOS01004784",
+   "fiume": "Marina",
+   "stazione": "Calenzano (GPRS)",
+   "prov": "FI",
+   "localita": "Calenzano",
+   "lat": 43.86086,
+   "lon": 11.155
+  },
+  {
+   "id": "TOS01004971",
+   "fiume": "Elsa",
+   "stazione": "Castelfiorentino (GPRS)",
+   "prov": "FI",
+   "localita": "Castelfiorentino",
+   "lat": 43.60448,
+   "lon": 10.9684
+  },
+  {
+   "id": "TOS01004967",
+   "fiume": "Elsa",
+   "stazione": "Certaldo (GPRS)",
+   "prov": "FI",
+   "localita": "Certaldo",
+   "lat": 43.54469,
+   "lon": 11.03477
+  },
+  {
+   "id": "TOS01004625",
+   "fiume": "Sieve",
+   "stazione": "Dicomano (GPRS)",
+   "prov": "FI",
+   "localita": "Dicomano",
+   "lat": 43.88609,
+   "lon": 11.52541
+  },
+  {
+   "id": "TOS01004941",
+   "fiume": "Arno",
+   "stazione": "Empoli (GPRS)",
+   "prov": "FI",
+   "localita": "Empoli",
+   "lat": 43.72403,
+   "lon": 10.94622
+  },
+  {
+   "id": "TOS03004935",
+   "fiume": "Orme",
+   "stazione": "Empoli-Pontorme (RADIO)",
+   "prov": "FI",
+   "localita": "Empoli-Pontorme",
+   "lat": 43.72119,
+   "lon": 10.9603
+  },
+  {
+   "id": "TOS01004679",
+   "fiume": "Arno",
+   "stazione": "Firenze Uffizi (GPRS)",
+   "prov": "FI",
+   "localita": "Firenze Uffizi",
+   "lat": 43.76764,
+   "lon": 11.25492
+  },
+  {
+   "id": "TOS01004683",
+   "fiume": "Arno",
+   "stazione": "Firenze Uffizi 3 (GPRS)",
+   "prov": "FI",
+   "localita": "Firenze Uffizi",
+   "lat": 43.76763,
+   "lon": 11.25492
+  },
+  {
+   "id": "TOS15004682",
+   "fiume": "Arno",
+   "stazione": "Firenze Uffizi 2 (RADIO)",
+   "prov": "FI",
+   "localita": "Firenze Uffizi",
+   "lat": 43.76763,
+   "lon": 11.25492
+  },
+  {
+   "id": "TOS03004373",
+   "fiume": "Santerno",
+   "stazione": "Firenzuola Coniale (GPRS)",
+   "prov": "FI",
+   "localita": "Firenzuola Coniale",
+   "lat": 44.15213,
+   "lon": 11.45427
+  },
+  {
+   "id": "TOS01004641",
+   "fiume": "Sieve",
+   "stazione": "Fornacina (GPRS)",
+   "prov": "FI",
+   "localita": "Fornacina",
+   "lat": 43.80079,
+   "lon": 11.46616
+  },
+  {
+   "id": "TOS01004642",
+   "fiume": "Sieve",
+   "stazione": "Fornacina 2 ul (GPRS)",
+   "prov": "FI",
+   "localita": "Fornacina 2 ul",
+   "lat": 43.80124,
+   "lon": 11.46761
+  },
+  {
+   "id": "TOS01005001",
+   "fiume": "Arno",
+   "stazione": "Fucecchio valle (RADIO)",
+   "prov": "FI",
+   "localita": "Fucecchio valle",
+   "lat": 43.71974,
+   "lon": 10.81236
+  },
+  {
+   "id": "TOS19000704",
+   "fiume": "Ema",
+   "stazione": "Grassina (RADIO)",
+   "prov": "FI",
+   "localita": "Grassina",
+   "lat": 43.72417,
+   "lon": 11.29421
+  },
+  {
+   "id": "TOS01004705",
+   "fiume": "Greve",
+   "stazione": "Greve (RADIO)",
+   "prov": "FI",
+   "localita": "Greve",
+   "lat": 43.58305,
+   "lon": 11.31816
+  },
+  {
+   "id": "TOS01004591",
+   "fiume": "Arno",
+   "stazione": "Incisa Valle (GPRS)",
+   "prov": "FI",
+   "localita": "Incisa Valle",
+   "lat": 43.68985,
+   "lon": 11.45619
+  },
+  {
+   "id": "TOS30250000",
+   "fiume": "Lamone",
+   "stazione": "Marradi (RADIO)",
+   "prov": "FI",
+   "localita": "Marradi",
+   "lat": 44.07428,
+   "lon": 11.60927
+  },
+  {
+   "id": "TOS01004901",
+   "fiume": "Arno",
+   "stazione": "Montelupo (RADIO)",
+   "prov": "FI",
+   "localita": "Montelupo",
+   "lat": 43.75987,
+   "lon": 11.04925
+  },
+  {
+   "id": "TOS01004915",
+   "fiume": "Virginio",
+   "stazione": "Montespertoli (GPRS)",
+   "prov": "FI",
+   "localita": "Montespertoli",
+   "lat": 43.65,
+   "lon": 11.09236
+  },
+  {
+   "id": "TOS01004659",
+   "fiume": "Arno",
+   "stazione": "Nave di Rosano (GPRS)",
+   "prov": "FI",
+   "localita": "Nave di Rosano",
+   "lat": 43.7712,
+   "lon": 11.42282
+  },
+  {
+   "id": "TOS01004661",
+   "fiume": "Arno",
+   "stazione": "Nave di Rosano valle (RADIO)",
+   "prov": "FI",
+   "localita": "Nave di Rosano valle",
+   "lat": 43.7743,
+   "lon": 11.41396
+  },
+  {
+   "id": "TOS03004729",
+   "fiume": "Ema",
+   "stazione": "Ponte a Niccheri (RADIO)",
+   "prov": "FI",
+   "localita": "Ponte a Niccheri",
+   "lat": 43.7346,
+   "lon": 11.29556
+  },
+  {
+   "id": "TOS01004811",
+   "fiume": "Arno",
+   "stazione": "Ponte a Signa (RADIO)",
+   "prov": "FI",
+   "localita": "Ponte a Signa",
+   "lat": 43.77305,
+   "lon": 11.09295
+  },
+  {
+   "id": "TOS01004702",
+   "fiume": "Mugnone",
+   "stazione": "Ponte alle Mosse (RADIO)",
+   "prov": "FI",
+   "localita": "Ponte alle Mosse",
+   "lat": 43.78686,
+   "lon": 11.22672
+  },
+  {
+   "id": "TOS01004731",
+   "fiume": "Greve",
+   "stazione": "Ponte di Scandicci (RADIO)",
+   "prov": "FI",
+   "localita": "Ponte di Scandicci",
+   "lat": 43.75481,
+   "lon": 11.19371
+  },
+  {
+   "id": "TOS01004791",
+   "fiume": "Bisenzio",
+   "stazione": "S. Piero a Ponti (GPRS)",
+   "prov": "FI",
+   "localita": "S. Piero a Ponti",
+   "lat": 43.80368,
+   "lon": 11.13053
+  },
+  {
+   "id": "TOS01004623",
+   "fiume": "Carza",
+   "stazione": "S. Piero a Sieve-Carza (RADIO)",
+   "prov": "FI",
+   "localita": "S. Piero a Sieve-Carza",
+   "lat": 43.95906,
+   "lon": 11.32235
+  },
+  {
+   "id": "TOS01004621",
+   "fiume": "Sieve",
+   "stazione": "S. Piero a Sieve-Sieve (RADIO)",
+   "prov": "FI",
+   "localita": "S. Piero a Sieve-Sieve",
+   "lat": 43.96511,
+   "lon": 11.32801
+  },
+  {
+   "id": "TOS03004911",
+   "fiume": "Pesa",
+   "stazione": "Sambuca (RADIO)",
+   "prov": "FI",
+   "localita": "Sambuca",
+   "lat": 43.571,
+   "lon": 11.215
+  },
+  {
+   "id": "TOS01004795",
+   "fiume": "Fosso Reale",
+   "stazione": "Sesto Fiorentino (RADIO)",
+   "prov": "FI",
+   "localita": "Sesto Fiorentino",
+   "lat": 43.82315,
+   "lon": 11.1933
+  },
+  {
+   "id": "TOS01004725",
+   "fiume": "Ema",
+   "stazione": "Strada in Chianti (GPRS)",
+   "prov": "FI",
+   "localita": "Strada in Chianti",
+   "lat": 43.66432,
+   "lon": 11.31454
+  },
+  {
+   "id": "TOS01004723",
+   "fiume": "Greve",
+   "stazione": "Tavarnuzze (RADIO)",
+   "prov": "FI",
+   "localita": "Tavarnuzze",
+   "lat": 43.71248,
+   "lon": 11.21797
+  },
+  {
+   "id": "TOS01004921",
+   "fiume": "Pesa",
+   "stazione": "Turbone (GPRS)",
+   "prov": "FI",
+   "localita": "Turbone",
+   "lat": 43.71861,
+   "lon": 11.03591
+  },
+  {
+   "id": "TOS03003118",
+   "fiume": "Laguna",
+   "stazione": "Ansedonia (GPRS)",
+   "prov": "GR",
+   "localita": "Ansedonia",
+   "lat": 42.42518,
+   "lon": 11.2739
+  },
+  {
+   "id": "TOS16005841",
+   "fiume": "OmbroneGR",
+   "stazione": "Berrettino (RADIO)",
+   "prov": "GR",
+   "localita": "Berrettino",
+   "lat": 42.74866,
+   "lon": 11.12366
+  },
+  {
+   "id": "TOS03005811",
+   "fiume": "Trasubbie",
+   "stazione": "Castellina (GPRS)",
+   "prov": "GR",
+   "localita": "Castellina",
+   "lat": 42.79391,
+   "lon": 11.24087
+  },
+  {
+   "id": "TOS01005573",
+   "fiume": "Pecora",
+   "stazione": "Cura Nuova (GPRS)",
+   "prov": "GR",
+   "localita": "Cura Nuova",
+   "lat": 42.9693,
+   "lon": 10.80643
+  },
+  {
+   "id": "TOS03003116",
+   "fiume": "Laguna",
+   "stazione": "Diga (GPRS)",
+   "prov": "GR",
+   "localita": "Diga",
+   "lat": 42.43647,
+   "lon": 11.20674
+  },
+  {
+   "id": "TOS03003111",
+   "fiume": "Laguna",
+   "stazione": "Fibia (GPRS)",
+   "prov": "GR",
+   "localita": "Fibia",
+   "lat": 42.48087,
+   "lon": 11.19804
+  },
+  {
+   "id": "TOS03006000",
+   "fiume": "",
+   "stazione": "Giglio Porto (RADIO)",
+   "prov": "GR",
+   "localita": "Giglio Porto",
+   "lat": 42.36146,
+   "lon": 10.92106
+  },
+  {
+   "id": "TOS01005822",
+   "fiume": "OmbroneGR",
+   "stazione": "Istia (GPRS)",
+   "prov": "GR",
+   "localita": "Istia",
+   "lat": 42.77781,
+   "lon": 11.18791
+  },
+  {
+   "id": "TOS03005611",
+   "fiume": "Bruna",
+   "stazione": "Lepri (GPRS)",
+   "prov": "GR",
+   "localita": "Lepri",
+   "lat": 42.90322,
+   "lon": 11.03742
+  },
+  {
+   "id": "TOS01005601",
+   "fiume": "Bruna",
+   "stazione": "Macchiascandona (GPRS)",
+   "prov": "GR",
+   "localita": "Macchiascandona",
+   "lat": 42.80463,
+   "lon": 11.00293
+  },
+  {
+   "id": "TOS03005895",
+   "fiume": "Albegna",
+   "stazione": "Marsiliana (RADIO)",
+   "prov": "GR",
+   "localita": "Marsiliana",
+   "lat": 42.5441,
+   "lon": 11.33643
+  },
+  {
+   "id": "TOS01005801",
+   "fiume": "Merse",
+   "stazione": "Montieri (GPRS)",
+   "prov": "GR",
+   "localita": "Montieri",
+   "lat": 43.12119,
+   "lon": 11.05787
+  },
+  {
+   "id": "TOS03003117",
+   "fiume": "Laguna",
+   "stazione": "Nassa (GPRS)",
+   "prov": "GR",
+   "localita": "Nassa",
+   "lat": 42.43205,
+   "lon": 11.16732
+  },
+  {
+   "id": "TOS07000046",
+   "fiume": "Fiora",
+   "stazione": "Pitigliano (RADIO)",
+   "prov": "GR",
+   "localita": "Pitigliano",
+   "lat": 42.59349,
+   "lon": 11.59965
+  },
+  {
+   "id": "TOS03005865",
+   "fiume": "Osa",
+   "stazione": "Podere Peretti (GPRS)",
+   "prov": "GR",
+   "localita": "Podere Peretti",
+   "lat": 42.56785,
+   "lon": 11.2336
+  },
+  {
+   "id": "TOS03005881",
+   "fiume": "Albegna",
+   "stazione": "Ponte di Montemerano (GPRS)",
+   "prov": "GR",
+   "localita": "Ponte di Montemerano",
+   "lat": 42.63808,
+   "lon": 11.45652
+  },
+  {
+   "id": "TOS03005831",
+   "fiume": "OmbroneGR",
+   "stazione": "Ponte Tura Aurelia (RADIO)",
+   "prov": "GR",
+   "localita": "Ponte Tura Aurelia",
+   "lat": 42.76247,
+   "lon": 11.1414
+  },
+  {
+   "id": "TOS01005785",
+   "fiume": "Gretano",
+   "stazione": "Roccastrada (RADIO)",
+   "prov": "GR",
+   "localita": "Roccastrada",
+   "lat": 43.00143,
+   "lon": 11.22266
+  },
+  {
+   "id": "TOS03005995",
+   "fiume": "Chiarone",
+   "stazione": "S. S. 1 Aurelia (RADIO)",
+   "prov": "GR",
+   "localita": "S. S. 1 Aurelia",
+   "lat": 42.41252,
+   "lon": 11.47568
+  },
+  {
+   "id": "TOS01005791",
+   "fiume": "OmbroneGR",
+   "stazione": "Sasso d'Ombrone (RADIO)",
+   "prov": "GR",
+   "localita": "Sasso d'Ombrone",
+   "lat": 42.93488,
+   "lon": 11.32193
+  },
+  {
+   "id": "TOS03005577",
+   "fiume": "Rigiolato",
+   "stazione": "Scarlino (GPRS)",
+   "prov": "GR",
+   "localita": "Scarlino",
+   "lat": 42.93887,
+   "lon": 10.838
+  },
+  {
+   "id": "TOS03005615",
+   "fiume": "Sovata",
+   "stazione": "Sovata (GPRS)",
+   "prov": "GR",
+   "localita": "Sovata",
+   "lat": 42.89485,
+   "lon": 11.00581
+  },
+  {
+   "id": "TOS03005897",
+   "fiume": "Albegna",
+   "stazione": "SP323 Amiatina (RADIO)",
+   "prov": "GR",
+   "localita": "SP323 Amiatina",
+   "lat": 42.5186,
+   "lon": 11.24192
+  },
+  {
+   "id": "TOS03005889",
+   "fiume": "Elsa",
+   "stazione": "SR74 Maremmana (RADIO)",
+   "prov": "GR",
+   "localita": "SR74 Maremmana",
+   "lat": 42.54523,
+   "lon": 11.34708
+  },
+  {
+   "id": "TOS03005487",
+   "fiume": "Cornia",
+   "stazione": "Cafaggio (RADIO)",
+   "prov": "LI",
+   "localita": "Cafaggio",
+   "lat": 43.03391,
+   "lon": 10.64947
+  },
+  {
+   "id": "TOS01005485",
+   "fiume": "Milia",
+   "stazione": "Calzalunga (GPRS)",
+   "prov": "LI",
+   "localita": "Calzalunga",
+   "lat": 43.0674,
+   "lon": 10.72264
+  },
+  {
+   "id": "TOS03005435",
+   "fiume": "Cecina",
+   "stazione": "Cecina SP39 (RADIO)",
+   "prov": "LI",
+   "localita": "Cecina SP39",
+   "lat": 43.31488,
+   "lon": 10.51463
+  },
+  {
+   "id": "TOS01005981",
+   "fiume": "Mare",
+   "stazione": "Livorno Mareografo (GPRS)",
+   "prov": "LI",
+   "localita": "Livorno Mareografo",
+   "lat": 43.54626,
+   "lon": 10.29963
+  },
+  {
+   "id": "TOS01005471",
+   "fiume": "Cornia",
+   "stazione": "Ponte per Montioni (GPRS)",
+   "prov": "LI",
+   "localita": "Ponte per Montioni",
+   "lat": 43.07273,
+   "lon": 10.71237
+  },
+  {
+   "id": "TOS01005472",
+   "fiume": "Cornia",
+   "stazione": "Ponte per Montioni 2 (GPRS)",
+   "prov": "LI",
+   "localita": "Ponte per Montioni",
+   "lat": 43.07273,
+   "lon": 10.71237
+  },
+  {
+   "id": "TOS03005335",
+   "fiume": "Tora",
+   "stazione": "Ponte SS555 (RADIO)",
+   "prov": "LI",
+   "localita": "Ponte SS555",
+   "lat": 43.60043,
+   "lon": 10.44429
+  },
+  {
+   "id": "TOS03005351",
+   "fiume": "Chioma",
+   "stazione": "Porticciolo del Chioma (GPRS)",
+   "prov": "LI",
+   "localita": "Porticciolo del Chioma",
+   "lat": 43.44953,
+   "lon": 10.38039
+  },
+  {
+   "id": "TOS01005441",
+   "fiume": "Mare",
+   "stazione": "Portoferraio (RADIO)",
+   "prov": "LI",
+   "localita": "Portoferraio",
+   "lat": 42.81215,
+   "lon": 10.33017
+  },
+  {
+   "id": "TOS03005282",
+   "fiume": "Scolmatore",
+   "stazione": "SR206 Emilia (RADIO)",
+   "prov": "LI",
+   "localita": "SR206 Emilia",
+   "lat": 43.62524,
+   "lon": 10.46121
+  },
+  {
+   "id": "TOS01005342",
+   "fiume": "Scolmatore",
+   "stazione": "Stagno (GPRS)",
+   "prov": "LI",
+   "localita": "Stagno",
+   "lat": 43.59997,
+   "lon": 10.35213
+  },
+  {
+   "id": "TOS01005489",
+   "fiume": "Cornia",
+   "stazione": "Vecchia SS Aurelia (GPRS)",
+   "prov": "LI",
+   "localita": "Vecchia SS Aurelia",
+   "lat": 43.01901,
+   "lon": 10.61396
+  },
+  {
+   "id": "TOS09001000",
+   "fiume": "Baccatoio",
+   "stazione": "Baccatoio (RADIO)",
+   "prov": "LU",
+   "localita": "Baccatoio",
+   "lat": 43.92402,
+   "lon": 10.22693
+  },
+  {
+   "id": "TOS02004271",
+   "fiume": "Serchio",
+   "stazione": "Borgo a Mozzano (GPRS)",
+   "prov": "LU",
+   "localita": "Borgo a Mozzano",
+   "lat": 43.97988,
+   "lon": 10.55151
+  },
+  {
+   "id": "TOS02004195",
+   "fiume": "Serchio",
+   "stazione": "Calavorno (GPRS)",
+   "prov": "LU",
+   "localita": "Calavorno",
+   "lat": 44.01975,
+   "lon": 10.5351
+  },
+  {
+   "id": "TOS02004059",
+   "fiume": "Camaiore",
+   "stazione": "Camaiore (GPRS)",
+   "prov": "LU",
+   "localita": "Camaiore",
+   "lat": 43.93373,
+   "lon": 10.28103
+  },
+  {
+   "id": "TOS02004115",
+   "fiume": "Serchio",
+   "stazione": "Camporgiano (GPRS)",
+   "prov": "LU",
+   "localita": "Camporgiano",
+   "lat": 44.16294,
+   "lon": 10.33842
+  },
+  {
+   "id": "TOS02004255",
+   "fiume": "Lima",
+   "stazione": "Chifenti (GPRS)",
+   "prov": "LU",
+   "localita": "Chifenti",
+   "lat": 44.002,
+   "lon": 10.55751
+  },
+  {
+   "id": "TOS02004055",
+   "fiume": "Mare",
+   "stazione": "Forte dei Marmi (RADIO)",
+   "prov": "LU",
+   "localita": "Forte dei Marmi",
+   "lat": 43.95571,
+   "lon": 10.16358
+  },
+  {
+   "id": "TOS15004335",
+   "fiume": "Guappero",
+   "stazione": "Guappero cassa mezzo (RADIO)",
+   "prov": "LU",
+   "localita": "Guappero cassa mezzo",
+   "lat": 43.81141,
+   "lon": 10.49166
+  },
+  {
+   "id": "TOS15004336",
+   "fiume": "Guappero",
+   "stazione": "Guappero cassa monte (RADIO)",
+   "prov": "LU",
+   "localita": "Guappero cassa monte",
+   "lat": 43.80667,
+   "lon": 10.49222
+  },
+  {
+   "id": "TOS15004337",
+   "fiume": "Guappero",
+   "stazione": "Guappero cassa valle 1 (RADIO)",
+   "prov": "LU",
+   "localita": "Guappero cassa valle",
+   "lat": 43.816,
+   "lon": 10.49073
+  },
+  {
+   "id": "TOS15004338",
+   "fiume": "Guappero",
+   "stazione": "Guappero cassa valle 2 (RADIO)",
+   "prov": "LU",
+   "localita": "Guappero cassa valle",
+   "lat": 43.81599,
+   "lon": 10.49073
+  },
+  {
+   "id": "TOS02004291",
+   "fiume": "Serchio",
+   "stazione": "Monte S. Quirico (GPRS)",
+   "prov": "LU",
+   "localita": "Monte S. Quirico",
+   "lat": 43.85725,
+   "lon": 10.50686
+  },
+  {
+   "id": "TOS02004286",
+   "fiume": "Freddana",
+   "stazione": "Mutigliano (GPRS)",
+   "prov": "LU",
+   "localita": "Mutigliano",
+   "lat": 43.88176,
+   "lon": 10.48419
+  },
+  {
+   "id": "TOS02004284",
+   "fiume": "Serchio",
+   "stazione": "Piaggione (GPRS)",
+   "prov": "LU",
+   "localita": "Piaggione",
+   "lat": 43.92935,
+   "lon": 10.51428
+  },
+  {
+   "id": "TOS02004165",
+   "fiume": "Serchio",
+   "stazione": "Ponte di Campia (GPRS)",
+   "prov": "LU",
+   "localita": "Ponte di Campia",
+   "lat": 44.09005,
+   "lon": 10.45282
+  },
+  {
+   "id": "TOS02004231",
+   "fiume": "Lima",
+   "stazione": "Ponte di Lucchio (RADIO)",
+   "prov": "LU",
+   "localita": "Ponte di Lucchio",
+   "lat": 44.04359,
+   "lon": 10.7198
+  },
+  {
+   "id": "TOS02004305",
+   "fiume": "Contesora",
+   "stazione": "Ponte Guido (GPRS)",
+   "prov": "LU",
+   "localita": "Ponte Guido",
+   "lat": 43.86504,
+   "lon": 10.43317
+  },
+  {
+   "id": "TOS02004045",
+   "fiume": "Versilia",
+   "stazione": "Ponte Tavole (GPRS)",
+   "prov": "LU",
+   "localita": "Ponte Tavole",
+   "lat": 43.97257,
+   "lon": 10.18492
+  },
+  {
+   "id": "TOS02004315",
+   "fiume": "Ozzeri",
+   "stazione": "Pontetetto (GPRS)",
+   "prov": "LU",
+   "localita": "Pontetetto",
+   "lat": 43.82965,
+   "lon": 10.46976
+  },
+  {
+   "id": "TOS02004017",
+   "fiume": "Vezza",
+   "stazione": "Ruosina (RADIO)",
+   "prov": "LU",
+   "localita": "Ruosina",
+   "lat": 43.99911,
+   "lon": 10.2668
+  },
+  {
+   "id": "TOS03005077",
+   "fiume": "Pescia di Collodi",
+   "stazione": "San Salvatore (RADIO)",
+   "prov": "LU",
+   "localita": "San Salvatore",
+   "lat": 43.85145,
+   "lon": 10.68845
+  },
+  {
+   "id": "TOS02004028",
+   "fiume": "Versilia",
+   "stazione": "Seravezza 1 (GPRS)",
+   "prov": "LU",
+   "localita": "Seravezza",
+   "lat": 43.99219,
+   "lon": 10.22271
+  },
+  {
+   "id": "TOS02004029",
+   "fiume": "Versilia",
+   "stazione": "Seravezza 2 (GPRS)",
+   "prov": "LU",
+   "localita": "Seravezza",
+   "lat": 43.99281,
+   "lon": 10.2235
+  },
+  {
+   "id": "TOS02004081",
+   "fiume": "Lago Massaciuccoli",
+   "stazione": "Torre del Lago (GPRS)",
+   "prov": "LU",
+   "localita": "Torre del Lago",
+   "lat": 43.83182,
+   "lon": 10.30683
+  },
+  {
+   "id": "TOS02004091",
+   "fiume": "Canale Burlamacca",
+   "stazione": "Viareggio 1 (GPRS)",
+   "prov": "LU",
+   "localita": "Viareggio",
+   "lat": 43.86767,
+   "lon": 10.25948
+  },
+  {
+   "id": "TOS02004101",
+   "fiume": "Canale Burlamacca",
+   "stazione": "Viareggio 2 (RADIO)",
+   "prov": "LU",
+   "localita": "Viareggio",
+   "lat": 43.86732,
+   "lon": 10.25851
+  },
+  {
+   "id": "TOS01004007",
+   "fiume": "Carrione",
+   "stazione": "Avenza (GPRS)",
+   "prov": "MS",
+   "localita": "Avenza",
+   "lat": 44.04516,
+   "lon": 10.06013
+  },
+  {
+   "id": "TOS09000015",
+   "fiume": "Bagnone",
+   "stazione": "Bagnone (RADIO)",
+   "prov": "MS",
+   "localita": "Bagnone",
+   "lat": 44.30966,
+   "lon": 9.98412
+  },
+  {
+   "id": "TOS03001246",
+   "fiume": "Magra",
+   "stazione": "Calamazza (GPRS)",
+   "prov": "MS",
+   "localita": "Calamazza",
+   "lat": 44.19813,
+   "lon": 9.95078
+  },
+  {
+   "id": "TOS09001246",
+   "fiume": "Magra",
+   "stazione": "Calamazza ARPAL (RADIO)",
+   "prov": "MS",
+   "localita": "Calamazza ARPAL",
+   "lat": 44.20179,
+   "lon": 9.95104
+  },
+  {
+   "id": "TOS02004011",
+   "fiume": "Frigido",
+   "stazione": "Canevara (GPRS)",
+   "prov": "MS",
+   "localita": "Canevara",
+   "lat": 44.05829,
+   "lon": 10.16812
+  },
+  {
+   "id": "TOS01004005",
+   "fiume": "Carrione",
+   "stazione": "Carrara (GPRS)",
+   "prov": "MS",
+   "localita": "Carrara",
+   "lat": 44.08199,
+   "lon": 10.10278
+  },
+  {
+   "id": "TOS03004002",
+   "fiume": "Carrione (ramo Colonnata)",
+   "stazione": "Colonnata Valle (RADIO)",
+   "prov": "MS",
+   "localita": "Colonnata Valle",
+   "lat": 44.08225,
+   "lon": 10.10532
+  },
+  {
+   "id": "TOS09000021",
+   "fiume": "Torrente Taverone",
+   "stazione": "Licciana Nardi (GPRS)",
+   "prov": "MS",
+   "localita": "Licciana Nardi",
+   "lat": 44.24278,
+   "lon": 10.00343
+  },
+  {
+   "id": "TOS03004001",
+   "fiume": "Carrione (ramo Colonnata)",
+   "stazione": "Pesa Miseglia (RADIO)",
+   "prov": "MS",
+   "localita": "Pesa Miseglia",
+   "lat": 44.08156,
+   "lon": 10.11363
+  },
+  {
+   "id": "TOS09000001",
+   "fiume": "Magra",
+   "stazione": "Piccatello (RADIO)",
+   "prov": "MS",
+   "localita": "Piccatello",
+   "lat": 44.38415,
+   "lon": 9.88338
+  },
+  {
+   "id": "TOS03004005",
+   "fiume": "Carrione",
+   "stazione": "Ponte della Bugia (RADIO)",
+   "prov": "MS",
+   "localita": "Ponte della Bugia",
+   "lat": 44.08085,
+   "lon": 10.10135
+  },
+  {
+   "id": "TOS11000705",
+   "fiume": "Magra",
+   "stazione": "Ponte Magra (RADIO)",
+   "prov": "MS",
+   "localita": "Ponte Magra",
+   "lat": 44.29319,
+   "lon": 9.94227
+  },
+  {
+   "id": "TOS11000706",
+   "fiume": "Teglia",
+   "stazione": "Ponte Teglia (RADIO)",
+   "prov": "MS",
+   "localita": "Ponte Teglia",
+   "lat": 44.33677,
+   "lon": 9.89909
+  },
+  {
+   "id": "TOS03004009",
+   "fiume": "Ricortola",
+   "stazione": "Ricortola (RADIO)",
+   "prov": "MS",
+   "localita": "Ricortola",
+   "lat": 44.03199,
+   "lon": 10.0972
+  },
+  {
+   "id": "TOS09001083",
+   "fiume": "Magra",
+   "stazione": "S. Giustina (RADIO)",
+   "prov": "MS",
+   "localita": "S. Giustina",
+   "lat": 44.3617,
+   "lon": 9.89669
+  },
+  {
+   "id": "TOS03004006",
+   "fiume": "Gragnana",
+   "stazione": "Santuario della Salute (RADIO)",
+   "prov": "MS",
+   "localita": "Santuario della Salute",
+   "lat": 44.08004,
+   "lon": 10.0959
+  },
+  {
+   "id": "TOS03000109",
+   "fiume": "Aulella",
+   "stazione": "Soliera (RADIO)",
+   "prov": "MS",
+   "localita": "Soliera",
+   "lat": 44.20232,
+   "lon": 10.0625
+  },
+  {
+   "id": "TOS03004003",
+   "fiume": "Carrione (ramo di Torano)",
+   "stazione": "Torano (RADIO)",
+   "prov": "MS",
+   "localita": "Torano",
+   "lat": 44.09104,
+   "lon": 10.10333
+  },
+  {
+   "id": "TOS01005161",
+   "fiume": "Era",
+   "stazione": "Belvedere (GPRS)",
+   "prov": "PI",
+   "localita": "Belvedere",
+   "lat": 43.63782,
+   "lon": 10.63679
+  },
+  {
+   "id": "TOS01005251",
+   "fiume": "Arno",
+   "stazione": "Bocca d'Arno (GPRS)",
+   "prov": "PI",
+   "localita": "Bocca d'Arno",
+   "lat": 43.68073,
+   "lon": 10.28035
+  },
+  {
+   "id": "TOS02004369",
+   "fiume": "Serchio",
+   "stazione": "Bocca di Serchio (RADIO)",
+   "prov": "PI",
+   "localita": "Bocca di Serchio",
+   "lat": 43.78136,
+   "lon": 10.26973
+  },
+  {
+   "id": "TOS03005379",
+   "fiume": "Possera",
+   "stazione": "Bulera (GPRS)",
+   "prov": "PI",
+   "localita": "Bulera",
+   "lat": 43.26802,
+   "lon": 10.91256
+  },
+  {
+   "id": "TOS03005097",
+   "fiume": "Allacciante",
+   "stazione": "Calcinaia (RADIO)",
+   "prov": "PI",
+   "localita": "Calcinaia",
+   "lat": 43.68393,
+   "lon": 10.63473
+  },
+  {
+   "id": "TOS01005131",
+   "fiume": "Era",
+   "stazione": "Capannoli (GPRS)",
+   "prov": "PI",
+   "localita": "Capannoli",
+   "lat": 43.59228,
+   "lon": 10.68442
+  },
+  {
+   "id": "TOS01005403",
+   "fiume": "Sterza",
+   "stazione": "Case Grisella (RADIO)",
+   "prov": "PI",
+   "localita": "Case Grisella",
+   "lat": 43.31024,
+   "lon": 10.67376
+  },
+  {
+   "id": "TOS03004993",
+   "fiume": "Arno",
+   "stazione": "Cassa Piaggioni Arno (RADIO)",
+   "prov": "PI",
+   "localita": "Cassa Piaggioni Arno",
+   "lat": 43.71798,
+   "lon": 10.85607
+  },
+  {
+   "id": "TOS03004995",
+   "fiume": "Arno",
+   "stazione": "Cassa Piaggioni Invaso (RADIO)",
+   "prov": "PI",
+   "localita": "Cassa Piaggioni Invaso",
+   "lat": 43.71586,
+   "lon": 10.83836
+  },
+  {
+   "id": "TOS01005365",
+   "fiume": "Fine",
+   "stazione": "Castellina Marittima (GPRS)",
+   "prov": "PI",
+   "localita": "Castellina Marittima",
+   "lat": 43.40629,
+   "lon": 10.49084
+  },
+  {
+   "id": "TOS01005101",
+   "fiume": "Usciana",
+   "stazione": "Cateratte monte (RADIO)",
+   "prov": "PI",
+   "localita": "Cateratte monte",
+   "lat": 43.68194,
+   "lon": 10.64887
+  },
+  {
+   "id": "TOS01005135",
+   "fiume": "Roglio",
+   "stazione": "Forcoli (RADIO)",
+   "prov": "PI",
+   "localita": "Forcoli",
+   "lat": 43.60257,
+   "lon": 10.69771
+  },
+  {
+   "id": "TOS01005005",
+   "fiume": "Egola",
+   "stazione": "Fornacino (GPRS)",
+   "prov": "PI",
+   "localita": "Fornacino",
+   "lat": 43.63155,
+   "lon": 10.84985
+  },
+  {
+   "id": "TOS01005262",
+   "fiume": "Scolmatore",
+   "stazione": "Gello (GPRS)",
+   "prov": "PI",
+   "localita": "Gello",
+   "lat": 43.65162,
+   "lon": 10.58797
+  },
+  {
+   "id": "TOS01005372",
+   "fiume": "Cecina",
+   "stazione": "Masso degli Specchi (RADIO)",
+   "prov": "PI",
+   "localita": "Masso degli Specchi",
+   "lat": 43.30193,
+   "lon": 10.95284
+  },
+  {
+   "id": "TOS01005115",
+   "fiume": "Era",
+   "stazione": "Molino d'Era (GPRS)",
+   "prov": "PI",
+   "localita": "Molino d'Era",
+   "lat": 43.45563,
+   "lon": 10.83013
+  },
+  {
+   "id": "TOS01005465",
+   "fiume": "Massera",
+   "stazione": "Molino del Balzone (GPRS)",
+   "prov": "PI",
+   "localita": "Molino del Balzone",
+   "lat": 43.12698,
+   "lon": 10.71888
+  },
+  {
+   "id": "TOS01005395",
+   "fiume": "Cecina",
+   "stazione": "Montegemoli (GPRS)",
+   "prov": "PI",
+   "localita": "Montegemoli",
+   "lat": 43.35467,
+   "lon": 10.78528
+  },
+  {
+   "id": "TOS01005231",
+   "fiume": "Arno",
+   "stazione": "Pisa a Sostegno (GPRS)",
+   "prov": "PI",
+   "localita": "Pisa a Sostegno",
+   "lat": 43.7127,
+   "lon": 10.39098
+  },
+  {
+   "id": "TOS01005151",
+   "fiume": "Cascina",
+   "stazione": "Ponsacco (RADIO)",
+   "prov": "PI",
+   "localita": "Ponsacco",
+   "lat": 43.61983,
+   "lon": 10.63399
+  },
+  {
+   "id": "TOS01004981",
+   "fiume": "Elsa",
+   "stazione": "Ponte a Elsa (RADIO)",
+   "prov": "PI",
+   "localita": "Ponte a Elsa",
+   "lat": 43.68937,
+   "lon": 10.89632
+  },
+  {
+   "id": "TOS01005401",
+   "fiume": "Cecina",
+   "stazione": "Ponte di Monterufoli (GPRS)",
+   "prov": "PI",
+   "localita": "Ponte di Monterufoli",
+   "lat": 43.32334,
+   "lon": 10.66982
+  },
+  {
+   "id": "TOS01005386",
+   "fiume": "Cecina",
+   "stazione": "Ponte SR439 (GPRS)",
+   "prov": "PI",
+   "localita": "Ponte SR439",
+   "lat": 43.33417,
+   "lon": 10.85806
+  },
+  {
+   "id": "TOS03005141",
+   "fiume": "Era",
+   "stazione": "Ponte via Chiavaccini (RADIO)",
+   "prov": "PI",
+   "localita": "Ponte via Chiavaccini",
+   "lat": 43.61902,
+   "lon": 10.64383
+  },
+  {
+   "id": "TOS01005181",
+   "fiume": "Arno",
+   "stazione": "Pontedera (GPRS)",
+   "prov": "PI",
+   "localita": "Pontedera",
+   "lat": 43.66533,
+   "lon": 10.63124
+  },
+  {
+   "id": "TOS02004311",
+   "fiume": "Serchio",
+   "stazione": "Ripafratta (GPRS)",
+   "prov": "PI",
+   "localita": "Ripafratta",
+   "lat": 43.81886,
+   "lon": 10.41426
+  },
+  {
+   "id": "TOS02004317",
+   "fiume": "Ozzeri",
+   "stazione": "Ripafratta 2 (GPRS)",
+   "prov": "PI",
+   "localita": "Ripafratta",
+   "lat": 43.81876,
+   "lon": 10.41426
+  },
+  {
+   "id": "TOS01005377",
+   "fiume": "Pavone",
+   "stazione": "S. Dalmazio (RADIO)",
+   "prov": "PI",
+   "localita": "S. Dalmazio",
+   "lat": 43.25349,
+   "lon": 10.94357
+  },
+  {
+   "id": "TOS01005191",
+   "fiume": "Arno",
+   "stazione": "S. Giovanni alla Vena valle (RADIO)",
+   "prov": "PI",
+   "localita": "S. Giovanni alla Vena valle",
+   "lat": 43.68459,
+   "lon": 10.58534
+  },
+  {
+   "id": "TOS03005193",
+   "fiume": "Arno",
+   "stazione": "S. Giovanni alla Vena valle_r (GPRS)",
+   "prov": "PI",
+   "localita": "S. Giovanni alla Vena valle_r",
+   "lat": 43.683,
+   "lon": 10.58534
+  },
+  {
+   "id": "TOS01005461",
+   "fiume": "Cornia",
+   "stazione": "SP Lodano (GPRS)",
+   "prov": "PI",
+   "localita": "SP Lodano",
+   "lat": 43.11159,
+   "lon": 10.72406
+  },
+  {
+   "id": "TOS03005417",
+   "fiume": "Cecina",
+   "stazione": "Steccaia (RADIO)",
+   "prov": "PI",
+   "localita": "Steccaia",
+   "lat": 43.33997,
+   "lon": 10.57354
+  },
+  {
+   "id": "TOS03005415",
+   "fiume": "Cecina",
+   "stazione": "Steccaia Q (RADIO)",
+   "prov": "PI",
+   "localita": "Steccaia Q",
+   "lat": 43.33997,
+   "lon": 10.57354
+  },
+  {
+   "id": "TOS02004365",
+   "fiume": "Serchio",
+   "stazione": "Vecchiano (GPRS)",
+   "prov": "PI",
+   "localita": "Vecchiano",
+   "lat": 43.78051,
+   "lon": 10.39889
+  },
+  {
+   "id": "TOS03004869",
+   "fiume": "Bagnolo",
+   "stazione": "Bagnolo (RADIO)",
+   "prov": "PO",
+   "localita": "Bagnolo",
+   "lat": 43.91499,
+   "lon": 11.05837
+  },
+  {
+   "id": "TOS01004779",
+   "fiume": "Bisenzio",
+   "stazione": "Gamberame (GPRS)",
+   "prov": "PO",
+   "localita": "Gamberame",
+   "lat": 43.92291,
+   "lon": 11.12702
+  },
+  {
+   "id": "TOS01004875",
+   "fiume": "Ombrone PT",
+   "stazione": "Poggio a Caiano (RADIO)",
+   "prov": "PO",
+   "localita": "Poggio a Caiano",
+   "lat": 43.81459,
+   "lon": 11.06144
+  },
+  {
+   "id": "TOS03004863",
+   "fiume": "Ombrone PT",
+   "stazione": "Ponte alle Vanne (RADIO)",
+   "prov": "PO",
+   "localita": "Ponte alle Vanne",
+   "lat": 43.8682,
+   "lon": 11.01557
+  },
+  {
+   "id": "TOS15004865",
+   "fiume": "Ombrone PT",
+   "stazione": "Ponte alle Vanne Cassa (RADIO)",
+   "prov": "PO",
+   "localita": "Ponte alle Vanne Cassa",
+   "lat": 43.86822,
+   "lon": 11.01558
+  },
+  {
+   "id": "TOS01004782",
+   "fiume": "Bisenzio",
+   "stazione": "Prato (RADIO)",
+   "prov": "PO",
+   "localita": "Prato",
+   "lat": 43.87944,
+   "lon": 11.10498
+  },
+  {
+   "id": "TOS03004847",
+   "fiume": "Calice",
+   "stazione": "Variante Pratese (RADIO)",
+   "prov": "PO",
+   "localita": "Variante Pratese",
+   "lat": 43.88888,
+   "lon": 11.02009
+  },
+  {
+   "id": "TOS02004215",
+   "fiume": "Lima",
+   "stazione": "Casotti di Cutigliano (RADIO)",
+   "prov": "PT",
+   "localita": "Casotti di Cutigliano",
+   "lat": 44.0982,
+   "lon": 10.7517
+  },
+  {
+   "id": "TOS03004871",
+   "fiume": "Stella",
+   "stazione": "Ponte alla Ceppa (RADIO)",
+   "prov": "PT",
+   "localita": "Ponte alla Ceppa",
+   "lat": 43.86211,
+   "lon": 10.98735
+  },
+  {
+   "id": "TOS03004851",
+   "fiume": "Brana",
+   "stazione": "Ponte dei Gelli (RADIO)",
+   "prov": "PT",
+   "localita": "Ponte dei Gelli",
+   "lat": 43.88606,
+   "lon": 11.00103
+  },
+  {
+   "id": "TOS01004839",
+   "fiume": "Ombrone PT",
+   "stazione": "Pontelungo valle (GPRS)",
+   "prov": "PT",
+   "localita": "Pontelungo valle",
+   "lat": 43.91981,
+   "lon": 10.89593
+  },
+  {
+   "id": "TOS30150800",
+   "fiume": "Reno",
+   "stazione": "Pracchia (RADIO)",
+   "prov": "PT",
+   "localita": "Pracchia",
+   "lat": 44.05549,
+   "lon": 10.90671
+  },
+  {
+   "id": "TOS01005672",
+   "fiume": "OmbroneGR",
+   "stazione": "Buonconvento (GPRS)",
+   "prov": "SI",
+   "localita": "Buonconvento",
+   "lat": 43.13528,
+   "lon": 11.47608
+  },
+  {
+   "id": "TOS03004505",
+   "fiume": "Montelungo",
+   "stazione": "Chiusi (RADIO)",
+   "prov": "SI",
+   "localita": "Chiusi",
+   "lat": 43.0056,
+   "lon": 11.95571
+  },
+  {
+   "id": "TOS01005761",
+   "fiume": "Orcia",
+   "stazione": "Monte Amiata Scalo (RADIO)",
+   "prov": "SI",
+   "localita": "Monte Amiata Scalo",
+   "lat": 42.97577,
+   "lon": 11.54692
+  },
+  {
+   "id": "TOS03005711",
+   "fiume": "Merse",
+   "stazione": "Montepescini (RADIO)",
+   "prov": "SI",
+   "localita": "Montepescini",
+   "lat": 43.09717,
+   "lon": 11.32692
+  },
+  {
+   "id": "TOS03004512",
+   "fiume": "Salarco",
+   "stazione": "Montepulciano (RADIO)",
+   "prov": "SI",
+   "localita": "Montepulciano",
+   "lat": 43.13799,
+   "lon": 11.8238
+  },
+  {
+   "id": "TOS03005725",
+   "fiume": "Farma",
+   "stazione": "Petriolo (GPRS)",
+   "prov": "SI",
+   "localita": "Petriolo",
+   "lat": 43.07928,
+   "lon": 11.29975
+  },
+  {
+   "id": "TOS03005651",
+   "fiume": "Arbia",
+   "stazione": "Pianella (RADIO)",
+   "prov": "SI",
+   "localita": "Pianella",
+   "lat": 43.35657,
+   "lon": 11.4162
+  },
+  {
+   "id": "TOS03005655",
+   "fiume": "Arbia",
+   "stazione": "Podere Nuovo (GPRS)",
+   "prov": "SI",
+   "localita": "Podere Nuovo",
+   "lat": 43.20079,
+   "lon": 11.45269
+  },
+  {
+   "id": "TOS01004965",
+   "fiume": "Elsa",
+   "stazione": "Poggibonsi (GPRS)",
+   "prov": "SI",
+   "localita": "Poggibonsi",
+   "lat": 43.47146,
+   "lon": 11.12876
+  },
+  {
+   "id": "TOS03005641",
+   "fiume": "OmbroneGR",
+   "stazione": "Ponte del Garbo (RADIO)",
+   "prov": "SI",
+   "localita": "Ponte del Garbo",
+   "lat": 43.24003,
+   "lon": 11.55343
+  },
+  {
+   "id": "TOS03005707",
+   "fiume": "Merse",
+   "stazione": "Ponte Orgia (RADIO)",
+   "prov": "SI",
+   "localita": "Ponte Orgia",
+   "lat": 43.21465,
+   "lon": 11.25811
+  },
+  {
+   "id": "TOS03005657",
+   "fiume": "Sorra",
+   "stazione": "Radi (RADIO)",
+   "prov": "SI",
+   "localita": "Radi",
+   "lat": 43.21503,
+   "lon": 11.38692
+  },
+  {
+   "id": "TOS03005781",
+   "fiume": "Orcia",
+   "stazione": "S. Angelo Cinigiano (GPRS)",
+   "prov": "SI",
+   "localita": "S. Angelo Cinigiano",
+   "lat": 42.96097,
+   "lon": 11.42652
+  },
+  {
+   "id": "TOS03004508",
+   "fiume": "Lago di Chiusi",
+   "stazione": "Sbarchino (RADIO)",
+   "prov": "SI",
+   "localita": "Sbarchino",
+   "lat": 43.05267,
+   "lon": 11.95826
+  },
+  {
+   "id": "TOS03004513",
+   "fiume": "Foenna",
+   "stazione": "Sinalunga (RADIO)",
+   "prov": "SI",
+   "localita": "Sinalunga",
+   "lat": 43.22295,
+   "lon": 11.75946
+  }
+ ]
+}
