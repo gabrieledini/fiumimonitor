@@ -4,6 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const { getText, parseTabella, localitaDi } = require('../netlify/functions/idrometri.js');
 
+const VERSIONE = '2026-11-16 coordinate WFS';
+const log = (...a) => console.log(`[${new Date().toISOString().slice(11, 19)}]`, ...a);
+
 // UTM (WGS84/ETRS89) → lat/lon
 function utmToLatLon(E, N, zona) {
   const a = 6378137, f = 1 / 298.257223563, k0 = 0.9996;
@@ -69,15 +72,21 @@ function chiaviDi(f) {
 }
 
 async function caricaFeature(url, etichetta) {
+  log(`${etichetta}: richiesta ${url}`);
   try {
     const res = await fetch(url, { headers: { 'User-Agent': 'IdrometriToscana/1.0' } });
+    log(`${etichetta}: HTTP ${res.status} ${res.headers.get('content-type') || ''}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const feats = JSON.parse(await res.text()).features || [];
-    console.log(`${etichetta}: ${feats.length} record`);
-    if (feats[0]) console.log(`Esempio ${etichetta}:`, JSON.stringify(feats[0]).slice(0, 400));
+    const testo = await res.text();
+    log(`${etichetta}: ${testo.length} caratteri ricevuti`);
+    let feats;
+    try { feats = JSON.parse(testo).features || []; }
+    catch (_) { throw new Error(`risposta non JSON: ${testo.slice(0, 200)}`); }
+    log(`${etichetta}: ${feats.length} record`);
+    if (feats[0]) log(`Esempio ${etichetta}:`, JSON.stringify(feats[0]).slice(0, 400));
     return feats;
   } catch (e) {
-    console.warn(`${etichetta} non disponibile: ${e.message}`);
+    console.warn(`[!] ${etichetta} non disponibile: ${e.message}`);
     return [];
   }
 }
@@ -96,14 +105,29 @@ async function anagrafica() {
       conCoord++;
       for (const k of chiaviDi(f)) if (!indice.has(k)) indice.set(k, c);
     }
-    console.log(`${etichetta}: ${conCoord} record con coordinate valide`);
+    log(`${etichetta}: ${conCoord} record con coordinate valide`);
   }
-  return (s) => indice.get('id:' + s.id) || indice.get('n:' + cifre(s.id))
-    || indice.get('s:' + norm(s.stazione)) || indice.get('s:' + norm(s.localita));
+  log(`Indice coordinate: ${indice.size} chiavi`);
+  const cerca = (s) => {
+    for (const [tipo, k] of [['codice', 'id:' + s.id], ['numero', 'n:' + cifre(s.id)], ['nome', 's:' + norm(s.stazione)], ['località', 's:' + norm(s.localita)]]) {
+      if (indice.has(k)) { stat[tipo]++; return indice.get(k); }
+    }
+    stat.nessuno++;
+    if (senza.length < 10) senza.push(`${s.id} ${s.stazione}`);
+    return null;
+  };
+  return cerca;
 }
 
+const stat = { codice: 0, numero: 0, nome: 0, località: 0, nessuno: 0 };
+const senza = [];
+
+
 (async () => {
+  log(`genera-localita, versione ${VERSIONE}`);
+  log('Tabella CFR: richiesta /monitoraggio/stazioni.php?type=idro');
   const { host, text } = await getText('/monitoraggio/stazioni.php?type=idro');
+  log(`Tabella CFR: ${text.length} caratteri da ${host}, ${parseTabella(text).length} stazioni lette`);
   const ana = await anagrafica();
   const stazioni = parseTabella(text)
     .map((s) => {
@@ -120,6 +144,8 @@ async function anagrafica() {
 
   const out = { generato: new Date().toISOString(), fonte: host, stazioni };
   fs.writeFileSync(path.join(__dirname, '..', 'localita.json'), JSON.stringify(out, null, 1) + '\n');
+  log(`Abbinamento coordinate: per codice ${stat.codice}, per numero ${stat.numero}, per nome ${stat.nome}, per località ${stat.località}, senza ${stat.nessuno}`);
+  if (senza.length) log(`Esempi senza coordinate: ${senza.join('; ')}`);
   const conCoord = stazioni.filter((s) => s.lat !== undefined).length;
-  console.log(`localita.json: ${stazioni.length} stazioni (${conCoord} con coordinate), ${new Set(stazioni.map((s) => s.prov + s.localita)).size} località`);
+  log(`localita.json: ${stazioni.length} stazioni (${conCoord} con coordinate), ${new Set(stazioni.map((s) => s.prov + s.localita)).size} località`);
 })().catch((e) => { console.error(e); process.exit(1); });
