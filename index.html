@@ -15,8 +15,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
@@ -93,11 +91,6 @@ h2:first-child{margin-top:4px}
 footer{padding:24px 16px 40px;font-size:14px;color:var(--testo-2)}
 footer a{color:var(--acqua)}
 .vuoto{color:var(--testo-2);font-style:italic}
-#mappa{height:min(55vh,420px);border:1px solid var(--bordo);background:var(--carta);margin-bottom:6px}
-.leaflet-container{font-family:inherit}
-.popup h4{margin:0 0 2px;font-size:15px}
-.popup p{margin:0 0 8px;color:#5B6168;font-size:13px}
-.popup button{font:inherit;font-size:14px;font-weight:700;background:#E3001B;color:#fff;border:0;border-radius:4px;padding:6px 12px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -122,15 +115,6 @@ footer a{color:var(--acqua)}
 <main>
   <div class="wrap">
     <div class="messaggio" id="messaggio" hidden></div>
-
-    <section id="sezMappa" hidden>
-      <h2>Dove sono le stazioni</h2>
-      <div id="mappa" role="region" aria-label="Mappa delle stazioni idrometriche"></div>
-      <div class="legenda">
-        <span><i style="border-color:var(--acqua);border-top-width:8px;width:8px;border-radius:50%"></i>stazione</span>
-        <span><i style="border-color:var(--rosso);border-top-width:8px;width:8px;border-radius:50%"></i>località scelta</span>
-      </div>
-    </section>
 
     <div class="vuoto-iniziale" id="iniziale">Scegli una località per vedere i livelli delle sue stazioni idrometriche.</div>
 
@@ -187,7 +171,6 @@ footer a{color:var(--acqua)}
 
   const sel = $('selLocalita'), btn = $('btnAggiorna');
   let localita = new Map();   // "PROV|Località" → [id, ...]
-  let mappa = null, marcatori = [];
   let dati = null;
   const grafici = {};
 
@@ -222,7 +205,7 @@ footer a{color:var(--acqua)}
       for (const s of j.stazioni) {
         const k = `${s.prov}|${s.localita}`;
         if (!localita.has(k)) localita.set(k, []);
-        localita.get(k).push(s.id);
+        localita.get(k).push(s);
       }
       const perProv = {};
       for (const k of localita.keys()) { const [p] = k.split('|'); (perProv[p] ||= []).push(k); }
@@ -231,54 +214,17 @@ footer a{color:var(--acqua)}
         Object.keys(perProv).sort((a, b) => nomeProv(a).localeCompare(nomeProv(b), 'it')).map((p) =>
           `<optgroup label="${esc(nomeProv(p))}">` +
           perProv[p].sort((a, b) => a.localeCompare(b, 'it')).map((k) => {
-            const n = localita.get(k).length;
-            return `<option value="${esc(k)}">${esc(k.split('|')[1])}${n > 1 ? ` (${n} stazioni)` : ''}</option>`;
+            const st = localita.get(k);
+            const fiumi = [...new Set(st.map((x) => x.fiume).filter(Boolean))].join(', ');
+            const n = st.length > 1 ? ` (${st.length} stazioni)` : '';
+            return `<option value="${esc(k)}">${esc(k.split('|')[1])}${fiumi ? ' – ' + esc(fiumi) : ''}${n}</option>`;
           }).join('') + '</optgroup>').join('');
       sel.disabled = false;
       messaggio('');
-      disegnaMappa(j.stazioni);
     } catch (e) {
       sel.innerHTML = '<option value="">Elenco non disponibile</option>';
       messaggio(`Elenco località non caricato: ${e.message}. Avvia il workflow «Aggiorna elenco località» su GitHub per generare localita.json.`);
     }
-  }
-
-  // ---------- Mappa ----------
-  function disegnaMappa(stazioni) {
-    const geo = stazioni.filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon));
-    if (!geo.length || !window.L) return;
-    $('sezMappa').hidden = false;
-    mappa = L.map('mappa', { scrollWheelZoom: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18, attribution: '&copy; OpenStreetMap',
-    }).addTo(mappa);
-    marcatori = geo.map((s) => {
-      const k = `${s.prov}|${s.localita}`;
-      const m = L.circleMarker([s.lat, s.lon], { radius: 6, weight: 2, color: '#fff', fillColor: css('--acqua'), fillOpacity: 1 }).addTo(mappa);
-      m.bindPopup(`<div class="popup"><h4>${esc(s.stazione)}</h4><p>${esc(s.fiume)}${s.comune ? ' – ' + esc(s.comune) : ''}</p><button type="button" data-k="${esc(k)}">Mostra dati di ${esc(s.localita)}</button></div>`);
-      m._k = k;
-      return m;
-    });
-    mappa.fitBounds(L.featureGroup(marcatori).getBounds(), { padding: [20, 20] });
-    mappa.on('popupopen', (e) => {
-      e.popup.getElement().querySelector('button')?.addEventListener('click', (ev) => {
-        sel.value = ev.currentTarget.dataset.k;
-        mappa.closePopup();
-        evidenzia();
-        caricaDati();
-      });
-    });
-  }
-
-  function evidenzia() {
-    if (!mappa) return;
-    const k = sel.value, scelti = [];
-    marcatori.forEach((m) => {
-      const on = m._k === k;
-      m.setRadius(on ? 10 : 6).setStyle({ fillColor: on ? css('--rosso') : css('--acqua') });
-      if (on) { m.bringToFront(); scelti.push(m.getLatLng()); }
-    });
-    if (scelti.length) mappa.flyToBounds(L.latLngBounds(scelti).pad(0.5), { maxZoom: 12, duration: 0.6 });
   }
 
   // ---------- Dati località ----------
@@ -289,7 +235,7 @@ footer a{color:var(--acqua)}
     $('ultimo').textContent = 'Caricamento dati…';
     messaggio('');
     try {
-      const r = await fetch(`${ENDPOINT}?ids=${encodeURIComponent(localita.get(k).join(','))}&t=${Date.now()}`, { cache: 'no-store' });
+      const r = await fetch(`${ENDPOINT}?ids=${encodeURIComponent(localita.get(k).map((x) => x.id).join(','))}&t=${Date.now()}`, { cache: 'no-store' });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
       dati = j;
@@ -456,7 +402,7 @@ footer a{color:var(--acqua)}
     graficoMargine(lista);
   }
 
-  sel.addEventListener('change', () => { btn.disabled = !sel.value; evidenzia(); if (sel.value) caricaDati(); });
+  sel.addEventListener('change', () => { btn.disabled = !sel.value; if (sel.value) caricaDati(); });
   btn.addEventListener('click', caricaDati);
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => dati?.stazioni.length && render());
   caricaElenco();
