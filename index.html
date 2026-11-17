@@ -95,6 +95,20 @@ button.secondario{font:inherit;font-weight:700;background:var(--carta);color:var
 button.secondario[aria-expanded="true"]{background:var(--rosso);color:#fff}
 button.secondario:disabled{opacity:.5;cursor:not-allowed}
 .secondario svg{width:18px;height:18px}
+.rischio-testa{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.badge{font-size:14px;font-weight:700;padding:4px 12px;border-radius:4px;color:#fff;background:var(--testo-2)}
+.badge.ok{background:var(--ok)}.badge.seguire{background:var(--soglia1);color:#1A1C1E}.badge.attenzione{background:var(--soglia2)}
+.tessere{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0}
+.tessera{background:var(--carta);border:1px solid var(--bordo);border-left:4px solid var(--bordo);padding:10px 12px}
+.tessera.on{border-left-color:var(--soglia2)}
+.tessera span{display:block;font-size:13px;color:var(--testo-2)}
+.tessera b{display:block;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.tessera small{font-size:12px;color:var(--testo-2)}
+.mini{position:relative;height:150px}
+.pannello h3{font-size:1rem;margin:14px 0 4px}
+.pannello h3:first-child{margin-top:0}
+.soglia-falda{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:15px;margin:6px 0 12px}
+.soglia-falda input{font:inherit;width:7em;padding:6px 8px;border:1px solid var(--testo-2);border-radius:4px;background:var(--carta);color:var(--testo)}
 #mappa{height:min(60vh,460px);border:1px solid var(--bordo);background:var(--carta)}
 .leaflet-container{font-family:inherit}
 .popup h4{margin:0 0 2px;font-size:15px}
@@ -120,6 +134,10 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
         Mappa stazioni
       </button>
+      <button class="secondario" id="btnRischio" type="button" aria-expanded="false" aria-controls="sezRischio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M3 21c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/></svg>
+        Rischio allagamento
+      </button>
     </div>
     <div class="ultimo" id="ultimo" aria-live="polite"></div>
   </div>
@@ -128,6 +146,27 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
 <main>
   <div class="wrap">
     <div class="messaggio" id="messaggio" hidden></div>
+
+    <section id="sezRischio" hidden>
+      <div class="rischio-testa">
+        <h2 style="margin-top:4px">Rischio allagamento – Viareggio</h2>
+        <span class="badge" id="rischioStato">–</span>
+      </div>
+      <p class="spiega" id="rischioTesto" style="color:var(--testo-2);margin:4px 0 0">Caricamento in corso…</p>
+      <div class="tessere" id="rischioTessere"></div>
+      <div class="pannello">
+        <div class="soglia-falda">
+          <label for="sogliaFalda">La tua soglia di falda (m)</label>
+          <input id="sogliaFalda" type="number" step="0.05" inputmode="decimal" placeholder="es. -0.50">
+          <small style="color:var(--testo-2)">Il livello a cui l’acqua è risalita in casa. Resta salvato su questo dispositivo.</small>
+        </div>
+        <h3>Falda</h3><div class="mini"><canvas id="rFalda" aria-label="Andamento falda"></canvas></div>
+        <h3>Canale Burlamacca</h3><div class="mini"><canvas id="rCanale" aria-label="Andamento Burlamacca"></canvas></div>
+        <h3>Mare</h3><div class="mini"><canvas id="rMare" aria-label="Andamento livello del mare"></canvas></div>
+        <h3>Pioggia (mm/h)</h3><div class="mini"><canvas id="rPioggia" aria-label="Pioggia oraria"></canvas></div>
+        <p class="spiega" style="margin-top:12px">Ultime 48 ore, stesso asse dei tempi per vedere quando i fenomeni coincidono. Lo stato è un’indicazione calcolata dalla pagina, non un’allerta ufficiale.</p>
+      </div>
+    </section>
 
     <section id="sezMappa" hidden>
       <h2>Stazioni idrometriche in Toscana</h2>
@@ -320,6 +359,137 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     });
     if (scelti.length) mappa.flyToBounds(L.latLngBounds(scelti).pad(0.5), { maxZoom: 12, duration: 0.6 });
   }
+
+  // ---------- Rischio allagamento ----------
+  const btnRischio = $('btnRischio');
+  const CHIAVE_SOGLIA = 'sogliaFalda';
+  let datiRischio = null;
+
+  function leggiSoglia() {
+    try { const v = parseFloat(localStorage.getItem(CHIAVE_SOGLIA)); return Number.isFinite(v) ? v : null; } catch (_) { return null; }
+  }
+  $('sogliaFalda').value = leggiSoglia() ?? '';
+  $('sogliaFalda').addEventListener('change', (e) => {
+    const v = parseFloat(String(e.target.value).replace(',', '.'));
+    try { Number.isFinite(v) ? localStorage.setItem(CHIAVE_SOGLIA, v) : localStorage.removeItem(CHIAVE_SOGLIA); } catch (_) {}
+    if (datiRischio) disegnaRischio();
+  });
+
+  const oraDi = (iso) => Math.floor(new Date(iso).getTime() / 3600e3);
+
+  // Valori orari sugli ultimi 48 h: ultimo valore dell'ora (livelli) o somma (pioggia)
+  function perOra(serie, ore, modo) {
+    const m = new Map();
+    if (modo === 'pioggia') {
+      let prec = null;
+      for (const p of serie) {
+        let mm = p.v2;
+        if (mm === null || mm === undefined) mm = prec !== null && p.v1 !== null ? Math.max(0, p.v1 - prec) : null;
+        prec = p.v1;
+        if (mm === null) continue;
+        const h = oraDi(p.t);
+        m.set(h, (m.get(h) || 0) + mm);
+      }
+      return ore.map((h) => (m.has(h) ? Math.round(m.get(h) * 10) / 10 : 0));
+    }
+    for (const p of serie) if (p.v1 !== null) m.set(oraDi(p.t), p.v1);
+    return ore.map((h) => (m.has(h) ? m.get(h) : null));
+  }
+
+  async function caricaRischio() {
+    $('rischioTesto').textContent = 'Caricamento in corso…';
+    try {
+      const r = await fetch(`${ENDPOINT}?rischio=viareggio&t=${Date.now()}`, { cache: 'no-store' });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
+      datiRischio = j;
+      disegnaRischio();
+    } catch (e) {
+      $('rischioTesto').textContent = `Dati non caricati: ${e.message}.`;
+    }
+  }
+
+  function disegnaRischio() {
+    const d = datiRischio;
+    const tutte = ['falda', 'canale', 'mare', 'pioggia'].flatMap((k) => d[k]?.serie || []);
+    const fine = tutte.length ? Math.max(...tutte.map((p) => oraDi(p.t))) : oraDi(new Date().toISOString());
+    const ore = Array.from({ length: 48 }, (_, i) => fine - 47 + i);
+    const etichette = ore.map((h) => {
+      const dt = new Date(h * 3600e3);
+      return dt.getHours() % 6 === 0 ? dt.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit' }) : '';
+    });
+    const v = {
+      falda: d.falda ? perOra(d.falda.serie, ore) : null,
+      canale: d.canale ? perOra(d.canale.serie, ore) : null,
+      mare: d.mare ? perOra(d.mare.serie, ore) : null,
+      pioggia: d.pioggia ? perOra(d.pioggia.serie, ore, 'pioggia') : null,
+    };
+    const ultimo = (a) => a ? [...a].reverse().find((x) => x !== null) ?? null : null;
+    const fa = (a, h) => a ? a[a.length - 1 - h] ?? null : null;
+    const soglia = leggiSoglia();
+
+    const pioggia24 = v.pioggia ? Math.round(v.pioggia.slice(-24).reduce((x, y) => x + y, 0)) : null;
+    const dCanale = ultimo(v.canale) !== null && fa(v.canale, 6) !== null ? ultimo(v.canale) - fa(v.canale, 6) : null;
+    const dFalda = ultimo(v.falda) !== null && fa(v.falda, 24) !== null ? ultimo(v.falda) - fa(v.falda, 24) : null;
+
+    const segnali = {
+      falda: soglia !== null && ultimo(v.falda) !== null && ultimo(v.falda) >= soglia,
+      canale: ultimo(v.canale) !== null && ((d.canale.liv1 !== null && ultimo(v.canale) >= d.canale.liv1) || (dCanale !== null && dCanale >= 0.15)),
+      mare: ultimo(v.mare) !== null && ultimo(v.mare) >= 0.5,
+      pioggia: pioggia24 !== null && pioggia24 >= 40,
+    };
+    const n = Object.values(segnali).filter(Boolean).length;
+    const st = n >= 2 ? ['attenzione', 'Attenzione'] : n === 1 ? ['seguire', 'Da seguire'] : ['ok', 'Normale'];
+    $('rischioStato').className = `badge ${st[0]}`;
+    $('rischioStato').textContent = st[1];
+
+    const motivi = [];
+    if (segnali.falda) motivi.push('falda oltre la tua soglia');
+    if (segnali.canale) motivi.push('Burlamacca alto o in rapida crescita');
+    if (segnali.mare) motivi.push('mare alto, il deflusso dei canali rallenta');
+    if (segnali.pioggia) motivi.push(`${pioggia24} mm di pioggia in 24 ore`);
+    const mancanti = ['falda', 'canale', 'mare', 'pioggia'].filter((k) => !d[k]);
+    $('rischioTesto').textContent = (motivi.length ? `Segnali: ${motivi.join(', ')}.` : 'Nessun segnale rilevante.')
+      + (soglia === null && d.falda ? ' Imposta la tua soglia di falda per includerla nel calcolo.' : '')
+      + (mancanti.length ? ` Dati non disponibili: ${mancanti.join(', ')}.` : '');
+
+    const tessera = (titolo, val, nota, on) => `<div class="tessera${on ? ' on' : ''}"><span>${titolo}</span><b>${val}</b><small>${nota}</small></div>`;
+    $('rischioTessere').innerHTML =
+      tessera('Falda', d.falda ? `${fmt(ultimo(v.falda))} m` : '–', d.falda ? `${fmtSegno(dFalda)} m in 24 h` : 'non disponibile', segnali.falda) +
+      tessera('Burlamacca', d.canale ? `${fmt(ultimo(v.canale))} m` : '–', d.canale ? `${fmtSegno(dCanale)} m in 6 h` : 'non disponibile', segnali.canale) +
+      tessera('Mare', d.mare ? `${fmt(ultimo(v.mare))} m` : '–', d.mare ? esc(d.mare.nome) : 'non disponibile', segnali.mare) +
+      tessera('Pioggia 24 h', d.pioggia ? `${pioggia24} mm` : '–', d.pioggia ? esc(d.pioggia.nome) : 'non disponibile', segnali.pioggia);
+
+    if (!window.Chart) return;
+    const mini = (id, dati, col, linee = [], tipo = 'line') => {
+      grafici[id]?.destroy();
+      const box = $(id).parentElement;
+      box.querySelector('p')?.remove();
+      if (!dati || !dati.some((x) => x !== null)) { $(id).hidden = true; box.style.height = 'auto'; box.insertAdjacentHTML('beforeend', '<p class="vuoto">Dati non disponibili.</p>'); return; }
+      $(id).hidden = false; box.style.height = '';
+      const o = opzioniBase();
+      o.plugins.legend.display = false;
+      o.interaction = { mode: 'index', intersect: false };
+      o.scales.x.ticks.autoSkip = false;
+      const ds = [tipo === 'bar'
+        ? { label: 'mm', data: dati, backgroundColor: col }
+        : { label: 'Livello', data: dati, borderColor: col, backgroundColor: css('--acqua-chiara'), fill: 'start', borderWidth: 2, pointRadius: 0, tension: 0.25, spanGaps: true }];
+      linee.filter(([val]) => val !== null && val !== undefined).forEach(([val, lab, c]) =>
+        ds.push({ label: lab, _soglia: val, data: dati.map(() => val), borderColor: css(c), borderDash: [7, 4], borderWidth: 2, pointRadius: 0, fill: false, type: 'line' }));
+      grafici[id] = new Chart($(id), { type: tipo, data: { labels: etichette, datasets: ds }, options: o, plugins: [etichetteSoglie] });
+    };
+    mini('rFalda', v.falda, css('--acqua'), [[soglia, 'La tua soglia', '--soglia2']]);
+    mini('rCanale', v.canale, css('--acqua'), d.canale ? [[d.canale.liv1, '1° livello', '--soglia1'], [d.canale.liv2, '2° livello', '--soglia2']] : []);
+    mini('rMare', v.mare, css('--acqua'), [[0.5, 'Mare alto', '--soglia1']]);
+    mini('rPioggia', v.pioggia, css('--acqua'), [], 'bar');
+  }
+
+  btnRischio.addEventListener('click', () => {
+    const aperta = btnRischio.getAttribute('aria-expanded') === 'true';
+    btnRischio.setAttribute('aria-expanded', String(!aperta));
+    $('sezRischio').hidden = aperta;
+    if (!aperta) caricaRischio();
+  });
 
   // ---------- Dati località ----------
   async function caricaDati() {
