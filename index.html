@@ -162,7 +162,7 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
         </div>
         <h3>Falda</h3><div class="mini"><canvas id="rFalda" aria-label="Andamento falda"></canvas></div>
         <h3>Canale Burlamacca</h3><div class="mini"><canvas id="rCanale" aria-label="Andamento Burlamacca"></canvas></div>
-        <h3>Mare</h3><div class="mini"><canvas id="rMare" aria-label="Andamento livello del mare"></canvas></div>
+        <h3>Mare – altezza onde (m)</h3><div class="mini"><canvas id="rMare" aria-label="Altezza delle onde"></canvas></div>
         <h3>Pioggia (mm/h)</h3><div class="mini"><canvas id="rPioggia" aria-label="Pioggia oraria"></canvas></div>
         <p class="spiega" style="margin-top:12px">Ultime 48 ore, stesso asse dei tempi per vedere quando i fenomeni coincidono. Lo stato è un’indicazione calcolata dalla pagina, non un’allerta ufficiale.</p>
       </div>
@@ -396,12 +396,30 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     return ore.map((h) => (m.has(h) ? m.get(h) : null));
   }
 
+  // Mare al largo di Viareggio: altezza onde (v1) e livello del mare con marea e sovralzo (v2)
+  async function caricaMare() {
+    const url = 'https://marine-api.open-meteo.com/v1/marine?latitude=43.85&longitude=10.20'
+      + '&hourly=wave_height,sea_level_height_msl&past_days=2&forecast_days=1&timezone=GMT';
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`Open-Meteo HTTP ${r.status}`);
+    const h = (await r.json()).hourly || {};
+    const adesso = Date.now();
+    const serie = (h.time || [])
+      .map((t, i) => ({ t: t + ':00Z', v1: h.wave_height?.[i] ?? null, v2: h.sea_level_height_msl?.[i] ?? null }))
+      .filter((p) => new Date(p.t).getTime() <= adesso && (p.v1 !== null || p.v2 !== null));
+    return serie.length ? { nome: 'Open-Meteo Marine, al largo di Viareggio', serie } : null;
+  }
+
   async function caricaRischio() {
     $('rischioTesto').textContent = 'Caricamento in corso…';
     try {
-      const r = await fetch(`${ENDPOINT}?rischio=viareggio&t=${Date.now()}`, { cache: 'no-store' });
+      const [r, mare] = await Promise.all([
+        fetch(`${ENDPOINT}?rischio=viareggio&t=${Date.now()}`, { cache: 'no-store' }),
+        caricaMare().catch(() => null),
+      ]);
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
+      if (mare) j.mare = mare; // onde e livello del mare da Open-Meteo Marine
       datiRischio = j;
       disegnaRischio();
     } catch (e) {
@@ -416,7 +434,7 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     const ore = Array.from({ length: 48 }, (_, i) => fine - 47 + i);
     const etichette = ore.map((h) => {
       const dt = new Date(h * 3600e3);
-      return dt.getHours() % 6 === 0 ? dt.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit' }) : '';
+      return dt.getHours() % 12 === 0 ? `${dt.getDate()}/${dt.getMonth() + 1} h${dt.getHours()}` : '';
     });
     const v = {
       falda: d.falda ? perOra(d.falda.serie, ore) : null,
@@ -428,6 +446,7 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     const fa = (a, h) => a ? a[a.length - 1 - h] ?? null : null;
     const soglia = leggiSoglia();
 
+    const livelloMare = d.mare ? ([...d.mare.serie].reverse().find((p) => p.v2 !== null)?.v2 ?? null) : null;
     const pioggia24 = v.pioggia ? Math.round(v.pioggia.slice(-24).reduce((x, y) => x + y, 0)) : null;
     const dCanale = ultimo(v.canale) !== null && fa(v.canale, 6) !== null ? ultimo(v.canale) - fa(v.canale, 6) : null;
     const dFalda = ultimo(v.falda) !== null && fa(v.falda, 24) !== null ? ultimo(v.falda) - fa(v.falda, 24) : null;
@@ -435,7 +454,7 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     const segnali = {
       falda: soglia !== null && ultimo(v.falda) !== null && ultimo(v.falda) >= soglia,
       canale: ultimo(v.canale) !== null && ((d.canale.liv1 !== null && ultimo(v.canale) >= d.canale.liv1) || (dCanale !== null && dCanale >= 0.15)),
-      mare: ultimo(v.mare) !== null && ultimo(v.mare) >= 0.5,
+      mare: (ultimo(v.mare) !== null && ultimo(v.mare) >= 1.25) || (livelloMare !== null && livelloMare >= 0.4),
       pioggia: pioggia24 !== null && pioggia24 >= 40,
     };
     const n = Object.values(segnali).filter(Boolean).length;
@@ -446,7 +465,7 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     const motivi = [];
     if (segnali.falda) motivi.push('falda oltre la tua soglia');
     if (segnali.canale) motivi.push('Burlamacca alto o in rapida crescita');
-    if (segnali.mare) motivi.push('mare alto, il deflusso dei canali rallenta');
+    if (segnali.mare) motivi.push('mare molto mosso o alto, il deflusso dei canali rallenta');
     if (segnali.pioggia) motivi.push(`${pioggia24} mm di pioggia in 24 ore`);
     const mancanti = ['falda', 'canale', 'mare', 'pioggia'].filter((k) => !d[k]);
     $('rischioTesto').textContent = (motivi.length ? `Segnali: ${motivi.join(', ')}.` : 'Nessun segnale rilevante.')
@@ -457,7 +476,7 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     $('rischioTessere').innerHTML =
       tessera('Falda', d.falda ? `${fmt(ultimo(v.falda))} m` : '–', d.falda ? `${fmtSegno(dFalda)} m in 24 h` : 'non disponibile', segnali.falda) +
       tessera('Burlamacca', d.canale ? `${fmt(ultimo(v.canale))} m` : '–', d.canale ? `${fmtSegno(dCanale)} m in 6 h` : 'non disponibile', segnali.canale) +
-      tessera('Mare', d.mare ? `${fmt(ultimo(v.mare))} m` : '–', d.mare ? esc(d.mare.nome) : 'non disponibile', segnali.mare) +
+      tessera('Onde', d.mare ? `${fmt(ultimo(v.mare), 1)} m` : '–', d.mare ? (livelloMare !== null ? `livello mare ${fmtSegno(livelloMare)} m` : 'Open-Meteo Marine') : 'non disponibile', segnali.mare) +
       tessera('Pioggia 24 h', d.pioggia ? `${pioggia24} mm` : '–', d.pioggia ? esc(d.pioggia.nome) : 'non disponibile', segnali.pioggia);
 
     if (!window.Chart) return;
@@ -465,8 +484,11 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
       grafici[id]?.destroy();
       const box = $(id).parentElement;
       box.querySelector('p')?.remove();
-      if (!dati || !dati.some((x) => x !== null)) { $(id).hidden = true; box.style.height = 'auto'; box.insertAdjacentHTML('beforeend', '<p class="vuoto">Dati non disponibili.</p>'); return; }
+      const vuoto = !dati || !dati.some((x) => x !== null);
+      const conSoglia = linee.some(([val]) => val !== null && val !== undefined);
+      if (vuoto && !conSoglia) { $(id).hidden = true; box.style.height = 'auto'; box.insertAdjacentHTML('beforeend', '<p class="vuoto">Dati non disponibili.</p>'); return; }
       $(id).hidden = false; box.style.height = '';
+      if (vuoto) { dati = etichette.map(() => null); box.insertAdjacentHTML('beforeend', '<p class="vuoto" style="position:absolute;top:40%;left:0;right:0;text-align:center;margin:0">Dati non disponibili, la soglia resta salvata.</p>'); }
       const o = opzioniBase();
       o.plugins.legend.display = false;
       o.interaction = { mode: 'index', intersect: false };
@@ -480,7 +502,7 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     };
     mini('rFalda', v.falda, css('--acqua'), [[soglia, 'La tua soglia', '--soglia2']]);
     mini('rCanale', v.canale, css('--acqua'), d.canale ? [[d.canale.liv1, '1° livello', '--soglia1'], [d.canale.liv2, '2° livello', '--soglia2']] : []);
-    mini('rMare', v.mare, css('--acqua'), [[0.5, 'Mare alto', '--soglia1']]);
+    mini('rMare', v.mare, css('--acqua'), [[1.25, 'Molto mosso', '--soglia1']]);
     mini('rPioggia', v.pioggia, css('--acqua'), [], 'bar');
   }
 
