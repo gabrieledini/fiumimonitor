@@ -1,6 +1,8 @@
 // Proxy CFR/SIR Toscana → JSON
 // GET /.netlify/functions/idrometri?ids=TOS..,TOS.. → dati attuali + serie delle stazioni richieste (solo quelle con dati)
 // GET /.netlify/functions/idrometri?raw=1           → righe grezze della tabella CFR (debug)
+// GET /.netlify/functions/idrometri?rischio=viareggio        → canale, mare, pioggia e falda per il rischio allagamento
+// GET /.netlify/functions/idrometri?rischio=viareggio&raw=1  → righe grezze usate per scegliere le stazioni (debug)
 
 const HOSTS = ['https://www.cfr.toscana.it', 'https://www.sir.toscana.it'];
 const UA = 'Mozilla/5.0 (compatible; IdrometriToscana/1.0)';
@@ -98,6 +100,76 @@ const json = (status, body, cache = 'no-store') => ({
   body: JSON.stringify(body),
 });
 
+// ---------- Rischio allagamento ----------
+const RISCHIO = {
+  viareggio: {
+    nome: 'Viareggio',
+    area: /viareggio|torre del lago/i,
+    vicini: /massarosa|camaiore|pietrasanta|vecchiano|lido di camaiore/i,
+    canale: /burlamacca/i,
+    mare: /mare|tirren|mareogr|porto/i,
+  },
+};
+
+async function righeTabella(type) {
+  const { text } = await getText(`/monitoraggio/stazioni.php?type=${type}`);
+  const righe = parseArrays(text)
+    .filter((a) => /^TOS\d+$/i.test(a[0]))
+    .map((a) => ({ id: a[0].toUpperCase(), a, testo: a.slice(1, 5).join(' ') }));
+  return { text, righe };
+}
+
+async function serieGrezza(id, type) {
+  const { text } = await getText(`/monitoraggio/dettaglio.php?id=${id}&type=${type}&${Date.now()}`);
+  return parseArrays(text)
+    .filter((a) => a.length >= 3 && DATA_RE.test(a[1]))
+    .map((a) => ({ t: toISO(a[1]), v1: num(a[2]), v2: a.length > 3 ? num(a[3]) : null }))
+    .filter((p) => p.t)
+    .sort((x, y) => x.t.localeCompare(y.t));
+}
+
+async function rischio(luogo, raw) {
+  const cfg = RISCHIO[String(luogo).toLowerCase()];
+  if (!cfg) throw new Error(`luogo non gestito: ${luogo}`);
+  const tipi = ['idro', 'pluvio', 'freat'];
+  const tab = await Promise.all(tipi.map((t) => righeTabella(t).catch((e) => ({ errore: e.message, righe: [] }))));
+  const [idro, pluvio, freat] = tab;
+  const qui = (r) => cfg.area.test(r.testo);
+  const vicino = (r) => cfg.vicini.test(r.testo);
+
+  const canale = idro.righe.find((r) => cfg.canale.test(r.testo) && qui(r));
+  const mare = idro.righe.find((r) => cfg.mare.test(r.testo) && qui(r) && !cfg.canale.test(r.testo));
+  const pioggia = pluvio.righe.find(qui) || pluvio.righe.find(vicino);
+  const falda = freat.righe.find(qui) || freat.righe.find(vicino);
+
+  if (raw) {
+    return {
+      errori: Object.fromEntries(tipi.map((t, i) => [t, tab[i].errore || null])),
+      idro: idro.righe.filter((r) => qui(r) || vicino(r)).map((r) => r.a),
+      pluvio: pluvio.righe.filter((r) => qui(r) || vicino(r)).map((r) => r.a),
+      freat: freat.righe.slice(0, 40).map((r) => r.a),
+      scelte: { canale: canale?.id, mare: mare?.id, pioggia: pioggia?.id, falda: falda?.id },
+    };
+  }
+
+  const soglie = canale ? parseTabella(idro.text).find((s) => s.id === canale.id) : null;
+  const carica = async (r, type, extra = {}) => {
+    if (!r) return null;
+    let serie = [];
+    try { serie = await serieGrezza(r.id, type); } catch (_) { /* nessuna serie */ }
+    if (!serie.length) return null;
+    return { id: r.id, nome: r.a.slice(1, 3).filter(Boolean).join(' – '), type, serie, ...extra };
+  };
+
+  const [c, m, p, f] = await Promise.all([
+    carica(canale, 'idro', { liv1: soglie?.liv1 ?? null, liv2: soglie?.liv2 ?? null }),
+    carica(mare, 'idro'),
+    carica(pioggia, 'pluvio'),
+    carica(falda, 'freat'),
+  ]);
+  return { luogo: cfg.nome, aggiornato: new Date().toISOString(), canale: c, mare: m, pioggia: p, falda: f };
+}
+
 // Riutilizzati da scripts/genera-localita.js
 exports.getText = getText;
 exports.parseTabella = parseTabella;
@@ -106,6 +178,8 @@ exports.localitaDi = localitaDi;
 exports.handler = async (event) => {
   const q = event.queryStringParameters || {};
   try {
+    if (q.rischio) return json(200, await rischio(q.rischio, q.raw));
+
     const { host, text } = await getText('/monitoraggio/stazioni.php?type=idro');
     const tabella = parseTabella(text);
 
