@@ -91,6 +91,23 @@ h2:first-child{margin-top:4px}
 footer{padding:24px 16px 40px;font-size:14px;color:var(--testo-2)}
 footer a{color:var(--acqua)}
 .vuoto{color:var(--testo-2);font-style:italic}
+.allerta-giorni{display:inline-grid;grid-template-columns:1fr 1fr;border:2px solid var(--rosso);border-radius:4px;overflow:hidden;margin:6px 0 12px}
+.allerta-giorni button{font:inherit;font-weight:700;background:var(--carta);color:var(--rosso);border:0;min-height:40px;padding:4px 22px;cursor:pointer}
+.allerta-giorni button+button{border-left:2px solid var(--rosso)}
+.allerta-giorni button[aria-pressed="true"]{background:var(--rosso);color:#fff}
+.allerta-mappe{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.allerta-mappe a{display:block;background:#fff;border:1px solid var(--bordo);padding:8px;color:#1A1C1E;text-decoration:none}
+.allerta-mappe b{display:block;font-size:15px;margin-bottom:2px}
+.allerta-mappe small{display:block;font-size:13px;color:#5B6168;margin-bottom:6px}
+.allerta-mappe img{width:100%;height:auto;display:block}
+.allerta-stato{font-size:16px;margin:0 0 8px}
+.notifica-comune{background:var(--carta);border:1px solid var(--bordo);border-left:4px solid var(--rosso);padding:10px 12px;margin-bottom:10px}
+.notifica-comune p{margin:4px 0 0;font-size:15px;color:var(--testo-2)}
+#allertaNotifiche h3{font-size:1rem;margin:6px 0 8px}
+.push-azioni{display:flex;flex-direction:column;gap:10px;max-width:560px}
+.pulsante-link{font:inherit;font-weight:600;background:none;border:0;color:var(--acqua);text-decoration:underline;cursor:pointer;padding:8px 0;text-align:left;min-height:40px}
+.livello-zona{display:inline-block;font-size:13px;font-weight:700;padding:2px 10px;border-radius:4px;margin:0 0 6px;color:#fff;background:#5B6168}
+.livello-zona.verde{background:#1E7D45}.livello-zona.giallo{background:#F2C200;color:#1A1C1E}.livello-zona.arancione{background:#E67700;color:#1A1C1E}.livello-zona.rosso{background:#E3001B}
 button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px}
 .interruttore{display:grid;grid-template-columns:1fr 1fr;border:2px solid var(--rosso);border-radius:4px;overflow:hidden}
 .interruttore button{font:inherit;font-weight:700;font-size:16px;background:var(--carta);color:var(--rosso);border:0;min-height:46px;display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer;padding:6px 8px;line-height:1.15}
@@ -127,7 +144,7 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
   <div class="wrap">
     <h1>Fiumi, canali e laghi<small>Livelli idrometrici in tempo reale</small></h1>
     <div class="scelta">
-      <label>Località
+      <label>Comune
         <select id="selLocalita" disabled><option value="">Caricamento elenco…</option></select>
       </label>
       <button class="aggiorna" id="btnAggiorna" type="button" disabled>
@@ -179,12 +196,12 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       <div id="mappa" role="region" aria-label="Mappa delle stazioni idrometriche della Toscana"></div>
       <div class="legenda">
         <span><i style="border-color:var(--acqua);border-top-width:8px;width:8px;border-radius:50%"></i>stazione</span>
-        <span><i style="border-color:var(--rosso);border-top-width:8px;width:8px;border-radius:50%"></i>località scelta</span>
+        <span><i style="border-color:var(--rosso);border-top-width:8px;width:8px;border-radius:50%"></i>comune scelto</span>
         <span id="senzaCoord"></span>
       </div>
     </section>
 
-    <div class="vuoto-iniziale" id="iniziale">Scegli una località per vedere i livelli delle sue stazioni idrometriche.</div>
+    <div class="vuoto-iniziale" id="iniziale">Scegli un comune per vedere i livelli delle sue stazioni idrometriche.</div>
 
     <section id="risultati" hidden>
       <h2 id="titoloStazioni">Stazioni</h2>
@@ -215,6 +232,38 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       <div><h3>Zero idrometrico</h3><p>Il livello è in metri sopra lo zero idrometrico (m szi), una quota convenzionale diversa per ogni stazione. Un valore negativo non è un errore.</p></div>
       <div><h3>Livelli di soglia</h3><p>Il 1° e il 2° livello sono i riferimenti del CFR per la criticità idraulica. Le allerte ufficiali restano quelle di Regione e Protezione civile.</p></div>
       <div><h3>Ora solare</h3><p>Il CFR pubblica gli orari in ora solare. La pagina li converte nell’ora del tuo dispositivo.</p></div>
+    </div>
+
+    <h2 id="titoloAllerta">Allerta meteo del comune</h2>
+    <div class="pannello" id="sezAllerta">
+      <p class="spiega">Allagamenti, temporali e mareggiate: bollettino ufficiale della Regione Toscana per la zona di allerta del comune scelto, più le comunicazioni del Comune.</p>
+      <button class="aggiorna" id="btnAllerta" type="button" style="max-width:560px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg>
+        Controlla l’allerta
+      </button>
+      <div id="allertaContenuto" hidden>
+        <p class="allerta-stato" id="allertaStato" aria-live="polite"></p>
+        <div class="allerta-giorni" role="group" aria-label="Giorno">
+          <button type="button" data-giorno="oggi" aria-pressed="true">Oggi</button>
+          <button type="button" data-giorno="domani" aria-pressed="false">Domani</button>
+        </div>
+        <div id="allertaNotifiche"></div>
+        <div class="allerta-mappe" id="allertaMappe"></div>
+        <p class="spiega" style="margin-top:10px">Livelli per zona dal servizio Cittadino Informato di ANCI Toscana, che riprende il bollettino del Centro Funzionale. Tocca una mappa per aprire la pagina ufficiale del rischio.</p>
+      </div>
+    </div>
+
+    <h2>Notifiche push</h2>
+    <div class="pannello" id="sezPush">
+      <p class="spiega" id="pushTesto">Ricevi sul telefono le allerte e le comunicazioni del comune scelto, anche con la pagina chiusa.</p>
+      <div class="push-azioni">
+        <button class="aggiorna" id="btnPush" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+          <span id="btnPushTesto">Attiva notifiche</span>
+        </button>
+        <button class="pulsante-link" id="btnPushProva" type="button" hidden>Invia una notifica di prova</button>
+      </div>
+      <p class="spiega" id="pushStato" aria-live="polite" style="margin-top:10px"></p>
     </div>
   </div>
 </main>
@@ -265,33 +314,31 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
   function messaggio(t) { const m = $('messaggio'); m.hidden = !t; m.textContent = t || ''; }
 
   // ---------- Elenco località ----------
+  // Comune della stazione: dall'anagrafica, altrimenti il nome della località
+  const comuneDi = (s) => s.comune || s.localita;
+
   async function caricaElenco() {
     try {
       const r = await fetch(ELENCO, { cache: 'no-cache' });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.stazioni?.length) throw new Error(r.ok ? 'elenco stazioni vuoto' : `${ELENCO} non trovato`);
-      localita = new Map();
+      localita = new Map();   // comune → stazioni
       for (const s of j.stazioni) {
-        const k = `${s.prov}|${s.localita}`;
+        const k = comuneDi(s);
         if (!localita.has(k)) localita.set(k, []);
         localita.get(k).push(s);
       }
-      const perProv = {};
-      for (const k of localita.keys()) { const [p] = k.split('|'); (perProv[p] ||= []).push(k); }
-      const nomeProv = (p) => PROVINCE[p] || p;
-      sel.innerHTML = '<option value="">Scegli una località…</option>' +
-        Object.keys(perProv).sort((a, b) => nomeProv(a).localeCompare(nomeProv(b), 'it')).map((p) =>
-          `<optgroup label="${esc(nomeProv(p))}">` +
-          perProv[p].sort((a, b) => a.localeCompare(b, 'it')).map((k) => {
-            const st = localita.get(k);
-            const fiumi = [...new Set(st.map((x) => x.fiume).filter(Boolean))].join(', ');
-            const n = st.length > 1 ? ` (${st.length} stazioni)` : '';
-            return `<option value="${esc(k)}">${esc(k.split('|')[1])}${fiumi ? ' – ' + esc(fiumi) : ''}${n}</option>`;
-          }).join('') + '</optgroup>').join('');
+      sel.innerHTML = '<option value="">Scegli un comune…</option>' +
+        [...localita.keys()].sort((a, b) => a.localeCompare(b, 'it')).map((k) => {
+          const st = localita.get(k);
+          const fiumi = [...new Set(st.map((x) => x.fiume).filter(Boolean))].join(', ');
+          return `<option value="${esc(k)}">${esc(k)} (${esc(st[0].prov)})${fiumi ? ' – ' + esc(fiumi) : ''}</option>`;
+        }).join('');
       tutte = j.stazioni;
       sel.disabled = false;
       btnMappa.disabled = false;
       messaggio('');
+      apriDaIndirizzo();
     } catch (e) {
       sel.innerHTML = '<option value="">Elenco non disponibile</option>';
       messaggio(`Elenco località non caricato: ${e.message}. Avvia il workflow «Aggiorna elenco località» su GitHub per generare localita.json.`);
@@ -344,9 +391,9 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(mappa);
     mappa.fitBounds(TOSCANA);
     marcatori = geo.map((s) => {
-      const k = `${s.prov}|${s.localita}`;
+      const k = comuneDi(s);
       const m = L.circleMarker([s.lat, s.lon], { radius: 6, weight: 2, color: '#fff', fillColor: css('--acqua'), fillOpacity: 1 }).addTo(mappa);
-      m.bindPopup(`<div class="popup"><h4>${esc(s.stazione)}</h4><p>${esc(s.fiume)} – ${esc(PROVINCE[s.prov] || s.prov)}</p><button type="button" data-k="${esc(k)}">Mostra dati di ${esc(s.localita)}</button></div>`);
+      m.bindPopup(`<div class="popup"><h4>${esc(s.stazione)}</h4><p>${esc(s.fiume)} – ${esc(PROVINCE[s.prov] || s.prov)}</p><button type="button" data-k="${esc(k)}">Mostra dati di ${esc(k)}</button></div>`);
       m._k = k;
       return m;
     });
@@ -532,6 +579,171 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
     btn.disabled = !sel.value && btnRischio.getAttribute('aria-expanded') !== 'true';
   }
 
+  // ---------- Allerta meteo ufficiale ----------
+  const RISCHI_ALLERTA = {
+    idrogeologico: ['Idrogeologico', 'allagamenti, frane e reticolo minore'],
+    idraulico: ['Idraulico', 'piene dei fiumi principali'],
+    temporali: ['Temporali forti', 'piogge intense, fulmini, grandine'],
+    mareggiate: ['Mareggiate', 'mare grosso sulla costa, rallenta il deflusso dei canali'],
+  };
+  const ORDINE = ['verde', 'giallo', 'arancione', 'rosso'];
+  const NOME_LIVELLO = { verde: 'Verde – nessuna allerta', giallo: 'Giallo – vigilanza', arancione: 'Arancione – allerta', rosso: 'Rosso – allerta' };
+  let datiAllerta = null, giornoAllerta = 'oggi';
+
+  async function caricaAllerta() {
+    const b = $('btnAllerta');
+    if (!sel.value) { $('allertaContenuto').hidden = false; $('allertaStato').textContent = 'Scegli prima un comune dal menu in alto.'; return; }
+    b.disabled = true; b.classList.add('gira');
+    $('allertaContenuto').hidden = false;
+    $('allertaStato').textContent = 'Caricamento del bollettino…';
+    try {
+      const r = await fetch(`/.netlify/functions/allerta?comune=${encodeURIComponent(sel.value)}&t=${Date.now()}`, { cache: 'no-store' });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
+      datiAllerta = j;
+      disegnaAllerta();
+    } catch (e) {
+      $('allertaStato').textContent = `Bollettino non caricato: ${e.message}.`;
+    } finally {
+      b.disabled = false; b.classList.remove('gira');
+    }
+  }
+
+  function disegnaAllerta() {
+    const d = datiAllerta;
+    const g = d[giornoAllerta];
+    const liv = g.livelli || {};
+    const presenti = Object.values(liv).map((x) => x.livello).filter(Boolean);
+    const max = presenti.sort((a, b) => ORDINE.indexOf(b) - ORDINE.indexOf(a))[0];
+    const em = d.emissione ? ` Bollettino emesso ${d.emissione}.` : '';
+    const dove = `${d.comune}${d.zona ? ` (zona ${d.zona})` : ''}`;
+    $('titoloAllerta').textContent = `Allerta meteo – ${d.comune}`;
+    $('allertaStato').innerHTML = max
+      ? `${esc(dove)}, ${giornoAllerta}: <span class="livello-zona ${max}">${NOME_LIVELLO[max]}</span>${esc(em)}`
+      : `Livelli per ${esc(dove)} non disponibili${g.errore ? ` (${esc(g.errore)})` : ''}: controlla le mappe.${esc(em)}`;
+    $('allertaNotifiche').innerHTML = d.notifiche?.length
+      ? `<h3>Comunicazioni del Comune</h3>` + d.notifiche.map((n) => `<div class="notifica-comune"><b>${esc(n.titolo)}</b><p>${esc(n.testo)}</p></div>`).join('')
+      : '';
+    document.querySelectorAll('.allerta-giorni button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.giorno === giornoAllerta)));
+    const m = g.mappe;
+    $('allertaMappe').innerHTML = Object.entries(RISCHI_ALLERTA).map(([k, [nome, desc]]) =>
+      `<a href="https://www.regione.toscana.it/allerta-meteo-rischio-${k}" target="_blank" rel="noopener">
+        <b>${nome}</b><small>${desc}</small>
+        ${liv[k]?.livello ? `<span class="livello-zona ${liv[k].livello}">${esc(d.comune)}: ${liv[k].livello}</span>` : ''}
+        <img loading="lazy" src="${m[k]}" alt="Mappa allerta rischio ${nome.toLowerCase()} ${giornoAllerta}" onerror="this.replaceWith(Object.assign(document.createElement('small'),{textContent:'Mappa non ancora disponibile.'}))">
+      </a>`).join('');
+  }
+
+  $('btnAllerta').addEventListener('click', caricaAllerta);
+  document.querySelectorAll('.allerta-giorni button').forEach((x) => x.addEventListener('click', () => {
+    giornoAllerta = x.dataset.giorno;
+    if (datiAllerta) disegnaAllerta();
+  }));
+
+  // ---------- Notifiche push ----------
+  const PUSH_API = '/.netlify/functions/push';
+  const CHIAVE_PUSH = 'pushComune';
+  const pushSupportato = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const comunePush = () => { try { return localStorage.getItem(CHIAVE_PUSH); } catch (_) { return null; } };
+
+  const b64ToUint8 = (b64) => {
+    const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  };
+
+  async function iscrizioneAttuale() {
+    if (!pushSupportato) return null;
+    const reg = await navigator.serviceWorker.getRegistration('/');
+    return reg ? reg.pushManager.getSubscription() : null;
+  }
+
+  async function aggiornaPush() {
+    const btnP = $('btnPush'), stato = $('pushStato');
+    if (!pushSupportato) {
+      btnP.disabled = true;
+      stato.textContent = /iphone|ipad/i.test(navigator.userAgent)
+        ? 'Su iPhone le notifiche funzionano solo con la pagina aggiunta alla schermata Home (Condividi, Aggiungi alla schermata Home), da lì aprila e riprova.'
+        : 'Questo browser non supporta le notifiche push.';
+      return;
+    }
+    const sub = await iscrizioneAttuale();
+    const c = comunePush();
+    if (sub && c) {
+      $('btnPushTesto').textContent = sel.value && sel.value !== c ? `Passa a ${sel.value}` : 'Disattiva notifiche';
+      btnP.dataset.azione = sel.value && sel.value !== c ? 'iscrivi' : 'annulla';
+      $('btnPushProva').hidden = false;
+      stato.textContent = `Notifiche attive per ${c}.`;
+    } else {
+      $('btnPushTesto').textContent = sel.value ? `Attiva notifiche per ${sel.value}` : 'Attiva notifiche';
+      btnP.dataset.azione = 'iscrivi';
+      $('btnPushProva').hidden = true;
+      stato.textContent = Notification.permission === 'denied'
+        ? 'Le notifiche sono bloccate nelle impostazioni del browser per questo sito.'
+        : sel.value ? '' : 'Scegli prima un comune dal menu in alto.';
+    }
+    btnP.disabled = false;
+  }
+
+  async function chiamaPush(corpo) {
+    const r = await fetch(PUSH_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
+    return j;
+  }
+
+  async function azionePush() {
+    const btnP = $('btnPush'), stato = $('pushStato');
+    btnP.disabled = true;
+    try {
+      if (btnP.dataset.azione === 'annulla') {
+        const sub = await iscrizioneAttuale();
+        if (sub) { await chiamaPush({ azione: 'annulla', subscription: sub.toJSON() }); await sub.unsubscribe(); }
+        try { localStorage.removeItem(CHIAVE_PUSH); } catch (_) {}
+        await aggiornaPush();
+        return;
+      }
+      if (!sel.value) { stato.textContent = 'Scegli prima un comune dal menu in alto.'; btnP.disabled = false; return; }
+      if (await Notification.requestPermission() !== 'granted') { stato.textContent = 'Permesso per le notifiche non concesso.'; btnP.disabled = false; return; }
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        const { publicKey } = await (await fetch(PUSH_API)).json();
+        if (!publicKey) throw new Error('chiave pubblica non disponibile');
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(publicKey) });
+      }
+      await chiamaPush({ azione: 'iscrivi', subscription: sub.toJSON(), comune: sel.value });
+      try { localStorage.setItem(CHIAVE_PUSH, sel.value); } catch (_) {}
+      await aggiornaPush();
+    } catch (e) {
+      stato.textContent = `Operazione non riuscita: ${e.message}.`;
+      btnP.disabled = false;
+    }
+  }
+
+  $('btnPush').addEventListener('click', azionePush);
+  $('btnPushProva').addEventListener('click', async () => {
+    try {
+      const sub = await iscrizioneAttuale();
+      if (!sub) throw new Error('nessuna iscrizione attiva');
+      await chiamaPush({ azione: 'prova', subscription: sub.toJSON() });
+      $('pushStato').textContent = 'Notifica di prova inviata.';
+    } catch (e) {
+      $('pushStato').textContent = `Prova non riuscita: ${e.message}.`;
+    }
+  });
+
+  // Apertura da notifica: /?comune=Viareggio
+  function apriDaIndirizzo() {
+    const c = new URLSearchParams(location.search).get('comune');
+    if (!c || !localita.has(c)) return;
+    sel.value = c;
+    sel.dispatchEvent(new Event('change'));
+    caricaAllerta();
+    $('titoloAllerta').scrollIntoView({ behavior: 'smooth' });
+  }
+
   // ---------- Dati località ----------
   async function caricaDati() {
     const k = sel.value;
@@ -547,7 +759,7 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       $('iniziale').hidden = true;
       if (!j.stazioni.length) {
         $('risultati').hidden = true;
-        messaggio(`Nessun dato disponibile in questo momento per ${k.split('|')[1]}.`);
+        messaggio(`Nessun dato disponibile in questo momento per ${k}.`);
         $('ultimo').textContent = '';
         return;
       }
@@ -695,7 +907,7 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
   function render() {
     const lista = dati.stazioni;
     $('risultati').hidden = false;
-    $('titoloStazioni').textContent = `${lista[0].localita}: ${lista.length} ${lista.length === 1 ? 'stazione' : 'stazioni'}`;
+    $('titoloStazioni').textContent = `${sel.value}: ${lista.length} ${lista.length === 1 ? 'stazione' : 'stazioni'}`;
     const g = $('griglia');
     g.innerHTML = '';
     lista.forEach((s) => {
@@ -707,11 +919,17 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
     graficoMargine(lista);
   }
 
-  sel.addEventListener('change', () => { aggiornaPulsante(); evidenzia(); if (sel.value) caricaDati(); });
+  sel.addEventListener('change', () => {
+    aggiornaPulsante(); evidenzia(); aggiornaPush();
+    if (sel.value) caricaDati();
+    if (datiAllerta && sel.value) caricaAllerta();
+  });
+  aggiornaPush();
   btnMappa.addEventListener('click', apriMappa);
   btn.addEventListener('click', () => {
     if (sel.value) caricaDati();
     if (btnRischio.getAttribute('aria-expanded') === 'true') caricaRischio();
+    if (datiAllerta) caricaAllerta();
   });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => dati?.stazioni.length && render());
   caricaElenco();

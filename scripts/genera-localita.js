@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { getText, parseTabella, localitaDi } = require('../netlify/functions/idrometri.js');
 
-const VERSIONE = '2026-11-16 coordinate WFS';
+const VERSIONE = '2026-11-17 comuni';
 const log = (...a) => console.log(`[${new Date().toISOString().slice(11, 19)}]`, ...a);
 
 // UTM (WGS84/ETRS89) → lat/lon
@@ -92,20 +92,31 @@ async function caricaFeature(url, etichetta) {
 }
 
 async function anagrafica() {
-  const indice = new Map(); // chiave → coordinate
+  const indice = new Map(); // chiave → { lat, lon, comune }
+  const comuneDi = (f) => {
+    const p = { ...(f.properties || {}), ...f };
+    const k = Object.keys(p).find((x) => /^comune$/i.test(x)) || Object.keys(p).find((x) => /comune|municip/i.test(x));
+    const v = k ? String(p[k] ?? '').trim() : '';
+    return v && typeof p[k] !== 'object' ? v.replace(/\s+/g, ' ') : undefined;
+  };
   const fonti = [
     [WFS, 'WFS idrometri'],
     ['https://www.sir.toscana.it/monitoraggio/actions.php?action=list&type_gauge=idro', 'elenco SIR'],
   ];
   for (const [url, etichetta] of fonti) {
-    let conCoord = 0;
+    let conCoord = 0, conComune = 0;
     for (const f of await caricaFeature(url, etichetta)) {
-      const c = coordDa(f);
-      if (!c) continue;
-      conCoord++;
-      for (const k of chiaviDi(f)) if (!indice.has(k)) indice.set(k, c);
+      const c = coordDa(f) || {};
+      const comune = comuneDi(f);
+      if (c.lat !== undefined) conCoord++;
+      if (comune) conComune++;
+      if (c.lat === undefined && !comune) continue;
+      for (const k of chiaviDi(f)) {
+        const v = indice.get(k) || {};
+        indice.set(k, { lat: v.lat ?? c.lat, lon: v.lon ?? c.lon, comune: v.comune ?? comune });
+      }
     }
-    log(`${etichetta}: ${conCoord} record con coordinate valide`);
+    log(`${etichetta}: ${conCoord} record con coordinate, ${conComune} con comune`);
   }
   log(`Indice coordinate: ${indice.size} chiavi`);
   const cerca = (s) => {
@@ -132,7 +143,7 @@ const senza = [];
   const stazioni = parseTabella(text)
     .map((s) => {
       const c = ana({ ...s, localita: localitaDi(s.stazione) }) || {};
-      return { id: s.id, fiume: s.fiume, stazione: s.stazione, prov: s.prov, localita: localitaDi(s.stazione), lat: c.lat, lon: c.lon };
+      return { id: s.id, fiume: s.fiume, stazione: s.stazione, prov: s.prov, localita: localitaDi(s.stazione), comune: c.comune, lat: c.lat, lon: c.lon };
     })
     .sort((a, b) => a.prov.localeCompare(b.prov) || a.localita.localeCompare(b.localita, 'it') || a.id.localeCompare(b.id));
 
@@ -147,5 +158,6 @@ const senza = [];
   log(`Abbinamento coordinate: per codice ${stat.codice}, per numero ${stat.numero}, per nome ${stat.nome}, per località ${stat.località}, senza ${stat.nessuno}`);
   if (senza.length) log(`Esempi senza coordinate: ${senza.join('; ')}`);
   const conCoord = stazioni.filter((s) => s.lat !== undefined).length;
+  log(`Stazioni con comune: ${stazioni.filter((s) => s.comune).length}, comuni distinti: ${new Set(stazioni.map((s) => s.comune).filter(Boolean)).size}`);
   log(`localita.json: ${stazioni.length} stazioni (${conCoord} con coordinate), ${new Set(stazioni.map((s) => s.prov + s.localita)).size} località`);
 })().catch((e) => { console.error(e); process.exit(1); });
