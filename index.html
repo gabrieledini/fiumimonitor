@@ -43,8 +43,8 @@ header.testata{background:var(--carta);border-bottom:1px solid var(--bordo);padd
 .wrap{max-width:1100px;margin:0 auto}
 h1{font-size:clamp(1.6rem,5vw,2.3rem);line-height:1.1;margin:0 0 14px;font-weight:700}
 h1 small{display:block;font-size:1rem;font-weight:400;color:var(--testo-2);margin-top:6px}
-.scelta{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-.scelta label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;color:var(--testo-2);flex:1 1 260px}
+.scelta{display:flex;flex-direction:column;gap:10px;max-width:560px}
+.scelta label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;color:var(--testo-2)}
 select{font:inherit;font-size:17px;color:var(--testo);background:var(--carta);border:1px solid var(--testo-2);border-radius:4px;padding:9px 10px;min-height:44px;width:100%}
 select:disabled{opacity:.6}
 button.aggiorna{font:inherit;font-weight:700;background:var(--rosso);color:#fff;border:0;border-radius:4px;padding:10px 18px;display:inline-flex;gap:8px;align-items:center;cursor:pointer;min-height:44px}
@@ -91,10 +91,14 @@ h2:first-child{margin-top:4px}
 footer{padding:24px 16px 40px;font-size:14px;color:var(--testo-2)}
 footer a{color:var(--acqua)}
 .vuoto{color:var(--testo-2);font-style:italic}
-button.secondario{font:inherit;font-weight:700;background:var(--carta);color:var(--rosso);border:2px solid var(--rosso);border-radius:4px;padding:8px 16px;display:inline-flex;gap:8px;align-items:center;cursor:pointer;min-height:44px}
-button.secondario[aria-expanded="true"]{background:var(--rosso);color:#fff}
-button.secondario:disabled{opacity:.5;cursor:not-allowed}
-.secondario svg{width:18px;height:18px}
+button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px}
+.interruttore{display:grid;grid-template-columns:1fr 1fr;border:2px solid var(--rosso);border-radius:4px;overflow:hidden}
+.interruttore button{font:inherit;font-weight:700;font-size:16px;background:var(--carta);color:var(--rosso);border:0;min-height:46px;display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer;padding:6px 8px;line-height:1.15}
+.interruttore button+button{border-left:2px solid var(--rosso)}
+.interruttore button[aria-expanded="true"]{background:var(--rosso);color:#fff}
+.interruttore button:disabled{opacity:.5;cursor:not-allowed}
+.interruttore svg{width:20px;height:20px;flex:none}
+.interruttore button:focus-visible{outline-offset:-5px;outline-color:#fff}
 .rischio-testa{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
 .badge{font-size:14px;font-weight:700;padding:4px 12px;border-radius:4px;color:#fff;background:var(--testo-2)}
 .badge.ok{background:var(--ok)}.badge.seguire{background:var(--soglia1);color:#1A1C1E}.badge.attenzione{background:var(--soglia2)}
@@ -130,14 +134,16 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
         Aggiorna dati
       </button>
-      <button class="secondario" id="btnMappa" type="button" aria-expanded="false" aria-controls="sezMappa" disabled>
+      <div class="interruttore" role="group" aria-label="Viste aggiuntive">
+      <button id="btnMappa" type="button" aria-expanded="false" aria-controls="sezMappa" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
-        Mappa stazioni
+        Mappa
       </button>
-      <button class="secondario" id="btnRischio" type="button" aria-expanded="false" aria-controls="sezRischio">
+      <button id="btnRischio" type="button" aria-expanded="false" aria-controls="sezRischio">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M3 21c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/></svg>
         Rischio allagamento
       </button>
+      </div>
     </div>
     <div class="ultimo" id="ultimo" aria-live="polite"></div>
   </div>
@@ -310,11 +316,18 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     });
   }
 
+  // Mappa e Rischio sono alternativi: aprirne uno chiude l'altro
+  function chiudiVista(bottone, sezione) {
+    bottone.setAttribute('aria-expanded', 'false');
+    $(sezione).hidden = true;
+  }
+
   async function apriMappa() {
     const aperta = btnMappa.getAttribute('aria-expanded') === 'true';
     btnMappa.setAttribute('aria-expanded', String(!aperta));
     $('sezMappa').hidden = aperta;
     if (aperta) return;
+    chiudiVista($('btnRischio'), 'sezRischio');
     if (mappa) { mappa.invalidateSize(); evidenzia(); return; }
     try {
       await caricaLeaflet();
@@ -510,8 +523,14 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     const aperta = btnRischio.getAttribute('aria-expanded') === 'true';
     btnRischio.setAttribute('aria-expanded', String(!aperta));
     $('sezRischio').hidden = aperta;
-    if (!aperta) caricaRischio();
+    if (!aperta) { chiudiVista(btnMappa, 'sezMappa'); caricaRischio(); }
+    aggiornaPulsante();
   });
+
+  // "Aggiorna dati" ricarica la località scelta e, se aperto, il rischio allagamento
+  function aggiornaPulsante() {
+    btn.disabled = !sel.value && btnRischio.getAttribute('aria-expanded') !== 'true';
+  }
 
   // ---------- Dati località ----------
   async function caricaDati() {
@@ -538,7 +557,7 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
       messaggio(`Dati non caricati: ${e.message}.`);
       $('ultimo').textContent = '';
     } finally {
-      btn.disabled = !sel.value; btn.classList.remove('gira');
+      btn.classList.remove('gira'); aggiornaPulsante();
     }
   }
 
@@ -688,9 +707,12 @@ button.secondario:disabled{opacity:.5;cursor:not-allowed}
     graficoMargine(lista);
   }
 
-  sel.addEventListener('change', () => { btn.disabled = !sel.value; evidenzia(); if (sel.value) caricaDati(); });
+  sel.addEventListener('change', () => { aggiornaPulsante(); evidenzia(); if (sel.value) caricaDati(); });
   btnMappa.addEventListener('click', apriMappa);
-  btn.addEventListener('click', caricaDati);
+  btn.addEventListener('click', () => {
+    if (sel.value) caricaDati();
+    if (btnRischio.getAttribute('aria-expanded') === 'true') caricaRischio();
+  });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => dati?.stazioni.length && render());
   caricaElenco();
 })();
