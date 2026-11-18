@@ -180,8 +180,8 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       <div class="pannello">
         <div class="soglia-falda">
           <label for="sogliaFalda">La tua soglia di falda (m)</label>
-          <input id="sogliaFalda" type="number" step="0.05" inputmode="decimal" placeholder="es. 0.50">
-          <small style="color:var(--testo-2)">Il livello a cui l’acqua è risalita in casa. Se il freatimetro misura la soggiacenza, indica i metri sotto il piano campagna. Resta salvato su questo dispositivo.</small>
+          <input id="sogliaFalda" type="number" step="0.05" inputmode="decimal" placeholder="es. -0.50">
+          <small style="color:var(--testo-2)">Il livello a cui l’acqua è risalita in casa, in metri rispetto al piano campagna: 0 è la superficie, −0,50 è mezzo metro sotto. Resta salvato su questo dispositivo.</small>
         </div>
         <h3>Falda</h3><p class="spiega" id="faldaInfo" style="margin:0 0 4px;font-size:14px"></p><div class="mini"><canvas id="rFalda" aria-label="Andamento falda"></canvas></div>
         <h3>Canale Burlamacca</h3><div class="mini"><canvas id="rCanale" aria-label="Andamento Burlamacca"></canvas></div>
@@ -476,13 +476,14 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       const [r, mare, falda] = await Promise.all([
         fetch(`${ENDPOINT}?rischio=viareggio&t=${Date.now()}`, { cache: 'no-store' }),
         caricaMare().catch(() => null),
-        fetch(`${ENDPOINT}?falda=viareggio&t=${Date.now()}`, { cache: 'no-store' })
-          .then((x) => (x.ok ? x.json() : null)).then((x) => x?.falda || null).catch(() => null),
+        fetch(`/.netlify/functions/falda?luogo=viareggio&t=${Date.now()}`, { cache: 'no-store' })
+          .then((x) => (x.ok ? x.json() : null)).catch(() => null),
       ]);
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
       if (mare) j.mare = mare; // onde e livello del mare da Open-Meteo Marine
-      j.falda = falda;         // chiamata separata: se è lenta o fallisce non blocca il resto
+      j.falda = falda?.falda || null;   // chiamata separata: se è lenta o fallisce non blocca il resto
+      j.faldaInPreparazione = falda?.stato === 'in preparazione';
       datiRischio = j;
       disegnaRischio();
     } catch (e) {
@@ -543,7 +544,7 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
 
     const tessera = (titolo, val, nota, on) => `<div class="tessera${on ? ' on' : ''}"><span>${titolo}</span><b>${val}</b><small>${nota}</small></div>`;
     $('rischioTessere').innerHTML =
-      tessera('Falda', falda !== null ? `${fmt(falda)} m` : '–', falda !== null ? `${sogg ? 'sotto il piano campagna, ' : ''}${fmtSegno(dFalda)} m in 7 gg, dato del ${dataFalda}` : 'non disponibile', segnali.falda) +
+      tessera('Falda', falda !== null ? `${fmt(falda)} m` : '–', falda !== null ? `dal piano campagna, ${fmtSegno(dFalda)} m in 7 gg, dato del ${dataFalda}` : 'non disponibile', segnali.falda) +
       tessera('Burlamacca', d.canale ? `${fmt(ultimo(v.canale))} m` : '–', d.canale ? `${fmtSegno(dCanale)} m in 6 h` : 'non disponibile', segnali.canale) +
       tessera('Onde', d.mare ? `${fmt(ultimo(v.mare), 1)} m` : '–', d.mare ? (livelloMare !== null ? `livello mare ${fmtSegno(livelloMare)} m` : 'Open-Meteo Marine') : 'non disponibile', segnali.mare) +
       tessera('Pioggia 24 h', d.pioggia ? `${pioggia24} mm` : '–', d.pioggia ? esc(d.pioggia.nome) : 'non disponibile', segnali.pioggia);
@@ -575,11 +576,12 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
     mini('rFalda', fs.length ? fs.map((p) => p.v1) : null, css('--acqua'), [[sogliaF, 'La tua soglia', '--soglia2']], 'line', {
       labels: fs.length ? fs.map((p) => new Date(p.t).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })) : etichette,
       reverse: sogg,
-      titoloY: sogg ? 'm sotto p.c.' : 'm',
+      titoloY: sogg ? 'm sotto p.c.' : 'm dal p.c.',
     });
     $('faldaInfo').textContent = d.falda
-      ? `Freatimetro ${d.falda.nome}, a ${fmt(d.falda.km, 1)} km. Dati giornalieri degli ultimi 30 giorni${sogg ? ': più la linea sale, più l’acqua è vicina al piano campagna' : ''}.`
-      : '';
+      ? `Freatimetro ${d.falda.nome}, a ${fmt(d.falda.km, 1)} km. Livello giornaliero rispetto al piano campagna (0 = superficie), ultimi 30 giorni.`
+        + (d.falda.massimo ? ` Massimo registrato dal ${new Date(d.falda.dal).getFullYear()}: ${fmt(d.falda.massimo.v)} m il ${new Date(d.falda.massimo.d).toLocaleDateString('it-IT')}.` : '')
+      : d.faldaInPreparazione ? 'Dati di falda in preparazione dall’archivio regionale: riprova tra qualche minuto con “Aggiorna dati”.' : '';
     mini('rCanale', v.canale, css('--acqua'), d.canale ? [[d.canale.liv1, '1° livello', '--soglia1'], [d.canale.liv2, '2° livello', '--soglia2']] : []);
     mini('rMare', v.mare, css('--acqua'), [[1.25, 'Molto mosso', '--soglia1']]);
     mini('rPioggia', v.pioggia, css('--acqua'), [], 'bar');
