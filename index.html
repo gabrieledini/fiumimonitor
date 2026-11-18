@@ -180,10 +180,10 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       <div class="pannello">
         <div class="soglia-falda">
           <label for="sogliaFalda">La tua soglia di falda (m)</label>
-          <input id="sogliaFalda" type="number" step="0.05" inputmode="decimal" placeholder="es. -0.50">
-          <small style="color:var(--testo-2)">Il livello a cui l’acqua è risalita in casa. Resta salvato su questo dispositivo.</small>
+          <input id="sogliaFalda" type="number" step="0.05" inputmode="decimal" placeholder="es. 0.50">
+          <small style="color:var(--testo-2)">Il livello a cui l’acqua è risalita in casa. Se il freatimetro misura la soggiacenza, indica i metri sotto il piano campagna. Resta salvato su questo dispositivo.</small>
         </div>
-        <h3>Falda</h3><div class="mini"><canvas id="rFalda" aria-label="Andamento falda"></canvas></div>
+        <h3>Falda</h3><p class="spiega" id="faldaInfo" style="margin:0 0 4px;font-size:14px"></p><div class="mini"><canvas id="rFalda" aria-label="Andamento falda"></canvas></div>
         <h3>Canale Burlamacca</h3><div class="mini"><canvas id="rCanale" aria-label="Andamento Burlamacca"></canvas></div>
         <h3>Mare – altezza onde (m)</h3><div class="mini"><canvas id="rMare" aria-label="Altezza delle onde"></canvas></div>
         <h3>Pioggia (mm/h)</h3><div class="mini"><canvas id="rPioggia" aria-label="Pioggia oraria"></canvas></div>
@@ -276,7 +276,6 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
 
 <script>
 (() => {
-  // force deploy
   const ENDPOINT = '/.netlify/functions/idrometri';
   const ELENCO = '/localita.json';   // generato dal workflow GitHub "Aggiorna elenco località"
   const PROVINCE = { AR: 'Arezzo', FI: 'Firenze', GR: 'Grosseto', LI: 'Livorno', LU: 'Lucca', MS: 'Massa-Carrara', PI: 'Pisa', PO: 'Prato', PT: 'Pistoia', SI: 'Siena' };
@@ -490,7 +489,7 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
 
   function disegnaRischio() {
     const d = datiRischio;
-    const tutte = ['falda', 'canale', 'mare', 'pioggia'].flatMap((k) => d[k]?.serie || []);
+    const tutte = ['canale', 'mare', 'pioggia'].flatMap((k) => d[k]?.serie || []);
     const fine = tutte.length ? Math.max(...tutte.map((p) => oraDi(p.t))) : oraDi(new Date().toISOString());
     const ore = Array.from({ length: 48 }, (_, i) => fine - 47 + i);
     const etichette = ore.map((h) => {
@@ -498,7 +497,6 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       return dt.getHours() % 12 === 0 ? `${dt.getDate()}/${dt.getMonth() + 1} h${dt.getHours()}` : '';
     });
     const v = {
-      falda: d.falda ? perOra(d.falda.serie, ore) : null,
       canale: d.canale ? perOra(d.canale.serie, ore) : null,
       mare: d.mare ? perOra(d.mare.serie, ore) : null,
       pioggia: d.pioggia ? perOra(d.pioggia.serie, ore, 'pioggia') : null,
@@ -510,10 +508,17 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
     const livelloMare = d.mare ? ([...d.mare.serie].reverse().find((p) => p.v2 !== null)?.v2 ?? null) : null;
     const pioggia24 = v.pioggia ? Math.round(v.pioggia.slice(-24).reduce((x, y) => x + y, 0)) : null;
     const dCanale = ultimo(v.canale) !== null && fa(v.canale, 6) !== null ? ultimo(v.canale) - fa(v.canale, 6) : null;
-    const dFalda = ultimo(v.falda) !== null && fa(v.falda, 24) !== null ? ultimo(v.falda) - fa(v.falda, 24) : null;
+    // Falda: dati giornalieri (ultimi 30 giorni). Soggiacenza = metri sotto il piano campagna (più piccolo = acqua più alta)
+    const fs = d.falda?.serie || [];
+    const sogg = d.falda?.tipo === 'soggiacenza';
+    const falda = fs.length ? fs.at(-1).v1 : null;
+    const falda7 = fs.length > 1 ? fs[Math.max(0, fs.length - 8)].v1 : null;
+    const dFalda = falda !== null && falda7 !== null ? Math.round((falda - falda7) * 100) / 100 : null;
+    const sogliaF = soglia === null ? null : sogg ? Math.abs(soglia) : soglia;
+    const dataFalda = fs.length ? new Date(fs.at(-1).t).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) : '';
 
     const segnali = {
-      falda: soglia !== null && ultimo(v.falda) !== null && ultimo(v.falda) >= soglia,
+      falda: sogliaF !== null && falda !== null && (sogg ? falda <= sogliaF : falda >= sogliaF),
       canale: ultimo(v.canale) !== null && ((d.canale.liv1 !== null && ultimo(v.canale) >= d.canale.liv1) || (dCanale !== null && dCanale >= 0.15)),
       mare: (ultimo(v.mare) !== null && ultimo(v.mare) >= 1.25) || (livelloMare !== null && livelloMare >= 0.4),
       pioggia: pioggia24 !== null && pioggia24 >= 40,
@@ -535,13 +540,14 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
 
     const tessera = (titolo, val, nota, on) => `<div class="tessera${on ? ' on' : ''}"><span>${titolo}</span><b>${val}</b><small>${nota}</small></div>`;
     $('rischioTessere').innerHTML =
-      tessera('Falda', d.falda ? `${fmt(ultimo(v.falda))} m` : '–', d.falda ? `${fmtSegno(dFalda)} m in 24 h` : 'non disponibile', segnali.falda) +
+      tessera('Falda', falda !== null ? `${fmt(falda)} m` : '–', falda !== null ? `${sogg ? 'sotto il piano campagna, ' : ''}${fmtSegno(dFalda)} m in 7 gg, dato del ${dataFalda}` : 'non disponibile', segnali.falda) +
       tessera('Burlamacca', d.canale ? `${fmt(ultimo(v.canale))} m` : '–', d.canale ? `${fmtSegno(dCanale)} m in 6 h` : 'non disponibile', segnali.canale) +
       tessera('Onde', d.mare ? `${fmt(ultimo(v.mare), 1)} m` : '–', d.mare ? (livelloMare !== null ? `livello mare ${fmtSegno(livelloMare)} m` : 'Open-Meteo Marine') : 'non disponibile', segnali.mare) +
       tessera('Pioggia 24 h', d.pioggia ? `${pioggia24} mm` : '–', d.pioggia ? esc(d.pioggia.nome) : 'non disponibile', segnali.pioggia);
 
     if (!window.Chart) return;
-    const mini = (id, dati, col, linee = [], tipo = 'line') => {
+    const mini = (id, dati, col, linee = [], tipo = 'line', opz = {}) => {
+      const etichette_ = opz.labels || etichette;
       grafici[id]?.destroy();
       const box = $(id).parentElement;
       box.querySelector('p')?.remove();
@@ -549,19 +555,28 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       const conSoglia = linee.some(([val]) => val !== null && val !== undefined);
       if (vuoto && !conSoglia) { $(id).hidden = true; box.style.height = 'auto'; box.insertAdjacentHTML('beforeend', '<p class="vuoto">Dati non disponibili.</p>'); return; }
       $(id).hidden = false; box.style.height = '';
-      if (vuoto) { dati = etichette.map(() => null); box.insertAdjacentHTML('beforeend', '<p class="vuoto" style="position:absolute;top:40%;left:0;right:0;text-align:center;margin:0">Dati non disponibili, la soglia resta salvata.</p>'); }
+      if (vuoto) { dati = etichette_.map(() => null); box.insertAdjacentHTML('beforeend', '<p class="vuoto" style="position:absolute;top:40%;left:0;right:0;text-align:center;margin:0">Dati non disponibili, la soglia resta salvata.</p>'); }
       const o = opzioniBase();
       o.plugins.legend.display = false;
       o.interaction = { mode: 'index', intersect: false };
-      o.scales.x.ticks.autoSkip = false;
+      o.scales.x.ticks.autoSkip = !!opz.labels;
+      if (opz.reverse) o.scales.y.reverse = true;
+      if (opz.titoloY) o.scales.y.title = { display: true, text: opz.titoloY, color: css('--testo-2') };
       const ds = [tipo === 'bar'
         ? { label: 'mm', data: dati, backgroundColor: col }
-        : { label: 'Livello', data: dati, borderColor: col, backgroundColor: css('--acqua-chiara'), fill: 'start', borderWidth: 2, pointRadius: 0, tension: 0.25, spanGaps: true }];
+        : { label: 'Livello', data: dati, borderColor: col, backgroundColor: css('--acqua-chiara'), fill: opz.reverse ? false : 'start', borderWidth: 2, pointRadius: opz.labels ? 2 : 0, tension: 0.25, spanGaps: true }];
       linee.filter(([val]) => val !== null && val !== undefined).forEach(([val, lab, c]) =>
         ds.push({ label: lab, _soglia: val, data: dati.map(() => val), borderColor: css(c), borderDash: [7, 4], borderWidth: 2, pointRadius: 0, fill: false, type: 'line' }));
-      grafici[id] = new Chart($(id), { type: tipo, data: { labels: etichette, datasets: ds }, options: o, plugins: [etichetteSoglie] });
+      grafici[id] = new Chart($(id), { type: tipo, data: { labels: etichette_, datasets: ds }, options: o, plugins: [etichetteSoglie] });
     };
-    mini('rFalda', v.falda, css('--acqua'), [[soglia, 'La tua soglia', '--soglia2']]);
+    mini('rFalda', fs.length ? fs.map((p) => p.v1) : null, css('--acqua'), [[sogliaF, 'La tua soglia', '--soglia2']], 'line', {
+      labels: fs.length ? fs.map((p) => new Date(p.t).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })) : etichette,
+      reverse: sogg,
+      titoloY: sogg ? 'm sotto p.c.' : 'm',
+    });
+    $('faldaInfo').textContent = d.falda
+      ? `Freatimetro ${d.falda.nome}, a ${fmt(d.falda.km, 1)} km. Dati giornalieri degli ultimi 30 giorni${sogg ? ': più la linea sale, più l’acqua è vicina al piano campagna' : ''}.`
+      : '';
     mini('rCanale', v.canale, css('--acqua'), d.canale ? [[d.canale.liv1, '1° livello', '--soglia1'], [d.canale.liv2, '2° livello', '--soglia2']] : []);
     mini('rMare', v.mare, css('--acqua'), [[1.25, 'Molto mosso', '--soglia1']]);
     mini('rPioggia', v.pioggia, css('--acqua'), [], 'bar');
@@ -710,8 +725,10 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       await navigator.serviceWorker.ready;
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
-        const { publicKey } = await (await fetch(PUSH_API)).json();
-        if (!publicKey) throw new Error('chiave pubblica non disponibile');
+        const rk = await fetch(PUSH_API);
+        const jk = await rk.json().catch(() => ({}));
+        if (!jk.publicKey) throw new Error(jk.errore || `chiave pubblica non disponibile (HTTP ${rk.status})`);
+        const publicKey = jk.publicKey;
         sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(publicKey) });
       }
       await chiamaPush({ azione: 'iscrivi', subscription: sub.toJSON(), comune: sel.value });
