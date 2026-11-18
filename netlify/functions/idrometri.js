@@ -4,6 +4,8 @@
 // GET /.netlify/functions/idrometri?raw=1&id=TOS…   → riga e soglie di una stazione (debug)
 // GET /.netlify/functions/idrometri?rischio=viareggio        → canale, mare, pioggia e falda per il rischio allagamento
 // GET /.netlify/functions/idrometri?rischio=viareggio&raw=1  → righe grezze usate per scegliere le stazioni (debug)
+// GET /.netlify/functions/idrometri?falda=viareggio          → freatimetro più vicino, dati giornalieri 30 gg
+// GET /.netlify/functions/idrometri?falda=viareggio&raw=1    → freatimetri vicini e righe CSV (debug)
 
 const HOSTS = ['https://www.cfr.toscana.it', 'https://www.sir.toscana.it'];
 const UA = 'Mozilla/5.0 (compatible; IdrometriToscana/1.0)';
@@ -120,7 +122,7 @@ const WFS_FREAT = 'https://geo.sir.toscana.it/geoserver/geo/ows?service=WFS&vers
 
 async function scaricaUrl(url) {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 15000);
+  const t = setTimeout(() => ctrl.abort(), 7000);
   try {
     const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -135,8 +137,12 @@ const distKm = (a, b) => {
   return 2 * R * Math.asin(Math.sqrt(h));
 };
 
+let cacheFreat = null;
 async function freatimetriVicini(punto, quanti = 5) {
-  const feats = JSON.parse(await scaricaUrl(WFS_FREAT)).features || [];
+  // solo i freatimetri entro ~30 km (bbox lon,lat in WFS 1.0.0), con cache finché la function resta calda
+  const bbox = `&bbox=${punto.lon - 0.4},${punto.lat - 0.3},${punto.lon + 0.4},${punto.lat + 0.3}`;
+  cacheFreat ||= JSON.parse(await scaricaUrl(WFS_FREAT + bbox)).features || [];
+  const feats = cacheFreat;
   return feats.map((f) => {
     const p = f.properties || {};
     const id = Object.values(p).map((v) => String(v ?? '').trim().toUpperCase()).find((v) => /^TOS\d+$/.test(v));
@@ -154,9 +160,10 @@ async function datiGiornalieri(id) {
   const anno = new Date().getFullYear();
   const righe = [];
   let intestazione = null;
-  for (const a of [anno - 1, anno]) {
-    let testo;
-    try { testo = await scaricaUrl(`https://www.sir.toscana.it/monitoraggio/stazioni_giornaliere.php?id=${id}&current=${a}`); } catch (_) { continue; }
+  const testi = await Promise.all([anno - 1, anno].map((a) =>
+    scaricaUrl(`https://www.sir.toscana.it/monitoraggio/stazioni_giornaliere.php?id=${id}&current=${a}`).catch(() => null)));
+  for (const testo of testi) {
+    if (!testo) continue;
     const linee = testo.replace(/<[^>]+>/g, '\n').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     const iH = linee.findIndex((l) => /^data\s*;/i.test(l));
     if (iH < 0) continue;
@@ -186,11 +193,11 @@ async function falda(cfg, raw) {
     const primo = vicini[0] ? await datiGiornalieri(vicini[0].id).catch((e) => ({ errore: e.message })) : null;
     return { vicini: vicini.map(({ proprieta, ...v }) => ({ ...v, proprieta })), datiPrimo: primo && { ...primo, serie: primo.serie?.slice(-5) } };
   }
-  for (const v of vicini.slice(0, 3)) { // il più vicino con dati
-    const d = await datiGiornalieri(v.id).catch(() => null);
-    if (d?.serie?.length) return { id: v.id, nome: `${v.nome}${v.comune ? ' – ' + v.comune : ''}`, km: v.km, giornaliero: true, colonna: d.colonna, tipo: d.tipo, serie: d.serie };
-  }
-  return null;
+  const prove = await Promise.all(vicini.slice(0, 2).map((v) => datiGiornalieri(v.id).catch(() => null)));
+  const i = prove.findIndex((d) => d?.serie?.length);
+  if (i < 0) return null;
+  const v = vicini[i], d = prove[i];
+  return { id: v.id, nome: `${v.nome}${v.comune ? ' – ' + v.comune : ''}`, km: v.km, giornaliero: true, colonna: d.colonna, tipo: d.tipo, serie: d.serie };
 }
 
 async function righeTabella(type) {
@@ -228,7 +235,6 @@ async function rischio(luogo, raw) {
       errori: Object.fromEntries(tipi.map((t, i) => [t, tab[i].errore || null])),
       idro: idro.righe.filter((r) => qui(r) || vicino(r)).map((r) => r.a),
       pluvio: pluvio.righe.filter((r) => qui(r) || vicino(r)).map((r) => r.a),
-      falda: await falda(cfg, true).catch((e) => `ERRORE: ${e.message}`),
       scelte: { canale: canale?.id, mare: mare?.id, pioggia: pioggia?.id },
     };
   }
@@ -242,13 +248,12 @@ async function rischio(luogo, raw) {
     return { id: r.id, nome: r.a.slice(1, 3).filter(Boolean).join(' – '), type, serie, ...extra };
   };
 
-  const [c, m, p, f] = await Promise.all([
+  const [c, m, p] = await Promise.all([
     carica(canale, 'idro', { liv1: soglie?.liv1 ?? null, liv2: soglie?.liv2 ?? null }),
     carica(mare, 'idro'),
     carica(pioggia, 'pluvio'),
-    falda(cfg).catch(() => null),
   ]);
-  return { luogo: cfg.nome, aggiornato: new Date().toISOString(), canale: c, mare: m, pioggia: p, falda: f };
+  return { luogo: cfg.nome, aggiornato: new Date().toISOString(), canale: c, mare: m, pioggia: p };
 }
 
 // Riutilizzati da scripts/genera-localita.js
@@ -259,6 +264,11 @@ exports.localitaDi = localitaDi;
 exports.handler = async (event) => {
   const q = event.queryStringParameters || {};
   try {
+    if (q.falda) {
+      const cfg = RISCHIO[String(q.falda).toLowerCase()];
+      if (!cfg) return json(400, { errore: `luogo non gestito: ${q.falda}` });
+      return json(200, { falda: await falda(cfg, q.raw) });
+    }
     if (q.rischio) return json(200, await rischio(q.rischio, q.raw));
 
     const { host, text } = await getText('/monitoraggio/stazioni.php?type=idro');
