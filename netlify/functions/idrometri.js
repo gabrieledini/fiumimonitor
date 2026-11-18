@@ -110,8 +110,88 @@ const RISCHIO = {
     vicini: /massarosa|camaiore|pietrasanta|vecchiano|lido di camaiore/i,
     canale: /burlamacca/i,
     mare: /mare|tirren|mareogr|porto/i,
+    lat: 43.874, lon: 10.252,
   },
 };
+
+// ---------- Falda: freatimetro più vicino + dati giornalieri SIR ----------
+const WFS_FREAT = 'https://geo.sir.toscana.it/geoserver/geo/ows?service=WFS&version=1.0.0&request=GetFeature'
+  + '&typeName=geo%3Acf_freatimetri&maxFeatures=300000&outputFormat=application%2Fjson&srsName=EPSG%3A4326';
+
+async function scaricaUrl(url) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.text();
+  } finally { clearTimeout(t); }
+}
+
+const distKm = (a, b) => {
+  const R = 6371, rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+
+async function freatimetriVicini(punto, quanti = 5) {
+  const feats = JSON.parse(await scaricaUrl(WFS_FREAT)).features || [];
+  return feats.map((f) => {
+    const p = f.properties || {};
+    const id = Object.values(p).map((v) => String(v ?? '').trim().toUpperCase()).find((v) => /^TOS\d+$/.test(v));
+    let g = f.geometry?.coordinates;
+    while (Array.isArray(g) && Array.isArray(g[0])) g = g[0];
+    if (!id || !Array.isArray(g)) return null;
+    const pos = { lon: +g[0], lat: +g[1] };
+    const campo = (re) => { const k = Object.keys(p).find((x) => re.test(x)); return k ? String(p[k] ?? '').trim() : ''; };
+    return { id, nome: campo(/^(nome|stazione|name|denominaz)/i) || id, comune: campo(/comune/i), ...pos, km: Math.round(distKm(punto, pos) * 10) / 10, proprieta: p };
+  }).filter((x) => x && Number.isFinite(x.lat)).sort((a, b) => a.km - b.km).slice(0, quanti);
+}
+
+// CSV giornaliero SIR: "Data;Col1;Col2…" con decimali a virgola
+async function datiGiornalieri(id) {
+  const anno = new Date().getFullYear();
+  const righe = [];
+  let intestazione = null;
+  for (const a of [anno - 1, anno]) {
+    let testo;
+    try { testo = await scaricaUrl(`https://www.sir.toscana.it/monitoraggio/stazioni_giornaliere.php?id=${id}&current=${a}`); } catch (_) { continue; }
+    const linee = testo.replace(/<[^>]+>/g, '\n').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const iH = linee.findIndex((l) => /^data\s*;/i.test(l));
+    if (iH < 0) continue;
+    intestazione = linee[iH].split(';').map((x) => x.trim());
+    for (const l of linee.slice(iH + 1)) {
+      // le righe possono arrivare attaccate: le separo sulle date
+      for (const r of l.split(/(?=\d{4}-\d{2}-\d{2};)/)) if (/^\d{4}-\d{2}-\d{2};/.test(r)) righe.push(r.split(';'));
+    }
+  }
+  if (!intestazione) return null;
+  // colonna del livello: per nome se riconoscibile, altrimenti la prima numerica
+  let col = intestazione.findIndex((h, i) => i > 0 && /sogg|liv|piez|falda|freat/i.test(h));
+  if (col < 0) col = intestazione.findIndex((h, i) => i > 0 && righe.some((r) => num(r[i]) !== null));
+  const serie = righe
+    .map((r) => ({ t: `${r[0]}T12:00:00+01:00`, v1: num(r[col]) }))
+    .filter((p) => p.v1 !== null)
+    .sort((x, y) => x.t.localeCompare(y.t))
+    .filter((p, i, a) => i === 0 || p.t !== a[i - 1].t)
+    .slice(-30);
+  const colonna = intestazione[col] || '';
+  return { colonna, intestazione, tipo: /sogg/i.test(colonna) ? 'soggiacenza' : 'livello', serie, esempio: righe.slice(-3) };
+}
+
+async function falda(cfg, raw) {
+  const vicini = await freatimetriVicini(cfg);
+  if (raw) {
+    const primo = vicini[0] ? await datiGiornalieri(vicini[0].id).catch((e) => ({ errore: e.message })) : null;
+    return { vicini: vicini.map(({ proprieta, ...v }) => ({ ...v, proprieta })), datiPrimo: primo && { ...primo, serie: primo.serie?.slice(-5) } };
+  }
+  for (const v of vicini.slice(0, 3)) { // il più vicino con dati
+    const d = await datiGiornalieri(v.id).catch(() => null);
+    if (d?.serie?.length) return { id: v.id, nome: `${v.nome}${v.comune ? ' – ' + v.comune : ''}`, km: v.km, giornaliero: true, colonna: d.colonna, tipo: d.tipo, serie: d.serie };
+  }
+  return null;
+}
 
 async function righeTabella(type) {
   const { text } = await getText(`/monitoraggio/stazioni.php?type=${type}`);
@@ -133,24 +213,23 @@ async function serieGrezza(id, type) {
 async function rischio(luogo, raw) {
   const cfg = RISCHIO[String(luogo).toLowerCase()];
   if (!cfg) throw new Error(`luogo non gestito: ${luogo}`);
-  const tipi = ['idro', 'pluvio', 'freat'];
+  const tipi = ['idro', 'pluvio'];
   const tab = await Promise.all(tipi.map((t) => righeTabella(t).catch((e) => ({ errore: e.message, righe: [] }))));
-  const [idro, pluvio, freat] = tab;
+  const [idro, pluvio] = tab;
   const qui = (r) => cfg.area.test(r.testo);
   const vicino = (r) => cfg.vicini.test(r.testo);
 
   const canale = idro.righe.find((r) => cfg.canale.test(r.testo) && qui(r));
   const mare = idro.righe.find((r) => cfg.mare.test(r.testo) && qui(r) && !cfg.canale.test(r.testo));
   const pioggia = pluvio.righe.find(qui) || pluvio.righe.find(vicino);
-  const falda = freat.righe.find(qui) || freat.righe.find(vicino);
 
   if (raw) {
     return {
       errori: Object.fromEntries(tipi.map((t, i) => [t, tab[i].errore || null])),
       idro: idro.righe.filter((r) => qui(r) || vicino(r)).map((r) => r.a),
       pluvio: pluvio.righe.filter((r) => qui(r) || vicino(r)).map((r) => r.a),
-      freat: freat.righe.slice(0, 40).map((r) => r.a),
-      scelte: { canale: canale?.id, mare: mare?.id, pioggia: pioggia?.id, falda: falda?.id },
+      falda: await falda(cfg, true).catch((e) => `ERRORE: ${e.message}`),
+      scelte: { canale: canale?.id, mare: mare?.id, pioggia: pioggia?.id },
     };
   }
 
@@ -167,7 +246,7 @@ async function rischio(luogo, raw) {
     carica(canale, 'idro', { liv1: soglie?.liv1 ?? null, liv2: soglie?.liv2 ?? null }),
     carica(mare, 'idro'),
     carica(pioggia, 'pluvio'),
-    carica(falda, 'freat'),
+    falda(cfg).catch(() => null),
   ]);
   return { luogo: cfg.nome, aggiornato: new Date().toISOString(), canale: c, mare: m, pioggia: p, falda: f };
 }
