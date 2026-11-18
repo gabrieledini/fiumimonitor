@@ -473,13 +473,16 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
   async function caricaRischio() {
     $('rischioTesto').textContent = 'Caricamento in corso…';
     try {
-      const [r, mare] = await Promise.all([
+      const [r, mare, falda] = await Promise.all([
         fetch(`${ENDPOINT}?rischio=viareggio&t=${Date.now()}`, { cache: 'no-store' }),
         caricaMare().catch(() => null),
+        fetch(`${ENDPOINT}?falda=viareggio&t=${Date.now()}`, { cache: 'no-store' })
+          .then((x) => (x.ok ? x.json() : null)).then((x) => x?.falda || null).catch(() => null),
       ]);
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
       if (mare) j.mare = mare; // onde e livello del mare da Open-Meteo Marine
+      j.falda = falda;         // chiamata separata: se è lenta o fallisce non blocca il resto
       datiRischio = j;
       disegnaRischio();
     } catch (e) {
@@ -753,13 +756,18 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
   });
 
   // Apertura da notifica: /?comune=Viareggio
+  const COMUNE_PREDEFINITO = 'Viareggio';
   function apriDaIndirizzo() {
     const c = new URLSearchParams(location.search).get('comune');
-    if (!c || !localita.has(c)) return;
-    sel.value = c;
-    sel.dispatchEvent(new Event('change'));
-    caricaAllerta();
-    $('titoloAllerta').scrollIntoView({ behavior: 'smooth' });
+    if (c && localita.has(c)) {
+      sel.value = c;
+      sel.dispatchEvent(new Event('change'));
+      caricaAllerta();
+      $('titoloAllerta').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    const pred = [...localita.keys()].find((k) => k.toLowerCase() === COMUNE_PREDEFINITO.toLowerCase());
+    if (pred) { sel.value = pred; sel.dispatchEvent(new Event('change')); }
   }
 
   // ---------- Dati località ----------
