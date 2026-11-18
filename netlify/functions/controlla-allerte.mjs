@@ -2,7 +2,7 @@
 // Gira ogni 30 minuti come scheduled function di Netlify.
 import { getStore } from '@netlify/blobs';
 import webpush from 'web-push';
-import { allertaComune, massimo, norm, RISCHI } from '../lib/allerte.mjs';
+import { allertaComune, massimo, norm, RISCHI } from '../lib/lib-allerte.mjs';
 
 const NOMI = { idrogeologico: 'idrogeologico', idraulico: 'idraulico', temporali: 'temporali', mareggiate: 'mareggiate' };
 

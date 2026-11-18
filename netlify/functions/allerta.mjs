@@ -1,6 +1,6 @@
 // GET /.netlify/functions/allerta?comune=Viareggio        → zona, livelli oggi/domani, notifiche comunali, mappe
 // GET /.netlify/functions/allerta?comune=Viareggio&raw=1  → record grezzi del GeoServer (debug)
-import { allertaComune, layer } from '../lib/allerte.mjs';
+import { allertaComune, layer } from '../lib/lib-allerte.mjs';
 
 const json = (status, body) => new Response(JSON.stringify(body), {
   status,
