@@ -1,6 +1,7 @@
 // Proxy CFR/SIR Toscana → JSON
 // GET /.netlify/functions/idrometri?ids=TOS..,TOS.. → dati attuali + serie delle stazioni richieste (solo quelle con dati)
 // GET /.netlify/functions/idrometri?raw=1           → righe grezze della tabella CFR (debug)
+// GET /.netlify/functions/idrometri?raw=1&id=TOS…   → riga e soglie di una stazione (debug)
 // GET /.netlify/functions/idrometri?rischio=viareggio        → canale, mare, pioggia e falda per il rischio allagamento
 // GET /.netlify/functions/idrometri?rischio=viareggio&raw=1  → righe grezze usate per scegliere le stazioni (debug)
 
@@ -183,6 +184,20 @@ exports.handler = async (event) => {
     const { host, text } = await getText('/monitoraggio/stazioni.php?type=idro');
     const tabella = parseTabella(text);
 
+    if (q.raw && q.id) {
+      // Debug di una stazione: riga grezza della tabella e tracce di soglie nella pagina di dettaglio
+      const id = q.id.trim().toUpperCase();
+      const riga = tabella.find((s) => s.id === id);
+      const det = await getText(`/monitoraggio/dettaglio.php?id=${id}&type=idro`).catch((e) => ({ text: `ERRORE ${e.message}` }));
+      const soglie = [...det.text.matchAll(/[^<>\n]{0,120}(soglia|liv\.?\s*[12]|guardia)[^<>\n]{0,120}/gi)].map((m) => clean(m[0])).slice(0, 15);
+      return json(200, {
+        host,
+        rigaTabella: riga ? riga._raw : null,
+        campiLetti: riga ? { liv1: riga.liv1, liv2: riga.liv2, livello: riga.livello, dh1: riga.dh1 } : null,
+        tracceSoglieDettaglio: soglie,
+        ultimiArrayDettaglio: parseArrays(det.text).slice(-3),
+      });
+    }
     if (q.raw) return json(200, { host, righe: tabella.slice(0, 20).map((s) => s._raw) });
 
     if (!q.ids) return json(400, { errore: 'Parametro ids mancante' });
