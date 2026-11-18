@@ -157,42 +157,77 @@ async function freatimetriVicini(punto, quanti = 5) {
   }).filter((x) => x && Number.isFinite(x.lat)).sort((a, b) => a.km - b.km).slice(0, quanti);
 }
 
-// CSV giornaliero SIR: "Data;Col1;Col2…" con decimali a virgola
-async function datiGiornalieri(id) {
-  const anno = new Date().getFullYear();
-  const righe = [];
-  let intestazione = null;
-  const testi = await Promise.all([anno - 1, anno].map((a) =>
-    scaricaUrl(`https://www.sir.toscana.it/monitoraggio/stazioni_giornaliere.php?id=${id}&current=${a}`).catch(() => null)));
-  for (const testo of testi) {
-    if (!testo) continue;
-    const linee = testo.replace(/<[^>]+>/g, '\n').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    const iH = linee.findIndex((l) => /^data\s*;/i.test(l));
-    if (iH < 0) continue;
-    intestazione = linee[iH].split(';').map((x) => x.trim());
-    for (const l of linee.slice(iH + 1)) {
-      // le righe possono arrivare attaccate: le separo sulle date
-      for (const r of l.split(/(?=\d{4}-\d{2}-\d{2};)/)) if (/^\d{4}-\d{2}-\d{2};/.test(r)) righe.push(r.split(';'));
+// Archivio SIR: http://www.sir.toscana.it/archivio/dati.php?IDST=<tipo>&D=json&IDS=<codice>
+// (formato documentato per i pluviometri con IDST=pluvio; per i freatimetri il valore di IDST va provato)
+const ARCHIVIO = (tipo, id) => `http://www.sir.toscana.it/archivio/dati.php?IDST=${tipo}&D=json&IDS=${id}`;
+const TIPI_FREAT = ['freat', 'freatimetro', 'freatim', 'freatimetri'];
+
+function dataISO(v) {
+  const t = String(v ?? '').trim();
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+}
+
+// Estrae coppie (data, valore) da JSON di forma sconosciuta, o da testo "data;valore"
+function estraiSerie(testo) {
+  const out = [];
+  let obj = null;
+  try { obj = JSON.parse(testo); } catch (_) { /* non JSON */ }
+  if (obj === null) {
+    for (const l of String(testo).split(/\r?\n|<br\s*\/?>/i)) {
+      const c = l.split(/[;,\t]/);
+      const d = dataISO(c[0]);
+      if (d && c.length > 1) { const v = num(c[1]); if (v !== null) out.push({ d, v }); }
     }
+    return out;
   }
-  if (!intestazione) return null;
-  // colonna del livello: per nome se riconoscibile, altrimenti la prima numerica
-  let col = intestazione.findIndex((h, i) => i > 0 && /sogg|liv|piez|falda|freat/i.test(h));
-  if (col < 0) col = intestazione.findIndex((h, i) => i > 0 && righe.some((r) => num(r[i]) !== null));
-  const serie = righe
-    .map((r) => ({ t: `${r[0]}T12:00:00+01:00`, v1: num(r[col]) }))
-    .filter((p) => p.v1 !== null)
-    .sort((x, y) => x.t.localeCompare(y.t))
-    .filter((p, i, a) => i === 0 || p.t !== a[i - 1].t)
-    .slice(-30);
-  const colonna = intestazione[col] || '';
-  return { colonna, intestazione, tipo: /sogg/i.test(colonna) ? 'soggiacenza' : 'livello', serie, esempio: righe.slice(-3) };
+  const visita = (x) => {
+    if (Array.isArray(x)) {
+      if (x.length >= 2 && dataISO(x[0]) && typeof x[1] !== 'object' && num(x[1]) !== null) { out.push({ d: dataISO(x[0]), v: num(x[1]) }); return; }
+      x.forEach(visita);
+    } else if (x && typeof x === 'object') {
+      const ks = Object.keys(x);
+      const kd = ks.find((k) => typeof x[k] !== 'object' && dataISO(x[k]));
+      const scalari = ks.filter((k) => k !== kd && typeof x[k] !== 'object' && num(x[k]) !== null);
+      const kv = scalari.find((k) => /sogg|liv|val|media|dato|freat/i.test(k)) || scalari[0];
+      if (kd && kv) { out.push({ d: dataISO(x[kd]), v: num(x[kv]) }); return; }
+      for (const k of ks) {
+        if (dataISO(k) && typeof x[k] !== 'object' && num(x[k]) !== null) out.push({ d: dataISO(k), v: num(x[k]) });
+        else visita(x[k]);
+      }
+    }
+  };
+  visita(obj);
+  return out;
+}
+
+async function datiGiornalieri(id, raw) {
+  const prove = await Promise.all(TIPI_FREAT.map(async (tipo) => {
+    const url = ARCHIVIO(tipo, id);
+    try {
+      const testo = await scaricaUrl(url);
+      return { tipo, url, testo, punti: estraiSerie(testo) };
+    } catch (e) {
+      return { tipo, url, errore: e.message, punti: [] };
+    }
+  }));
+  const ok = prove.find((p) => p.punti.length);
+  const serie = ok ? ok.punti
+    .sort((x, y) => x.d.localeCompare(y.d))
+    .filter((p, i, a) => i === 0 || p.d !== a[i - 1].d)
+    .slice(-30)
+    .map((p) => ({ t: `${p.d}T12:00:00+01:00`, v1: p.v })) : [];
+  const esito = { colonna: 'soggiacenza (m da p.c.)', tipo: 'soggiacenza', fonte: ok?.url || null, serie };
+  if (raw) esito.prove = prove.map((p) => ({ url: p.url, errore: p.errore || null, punti: p.punti.length, inizio: p.testo ? p.testo.slice(0, 300) : null }));
+  return esito;
 }
 
 async function falda(cfg, raw) {
   const vicini = await freatimetriVicini(cfg);
   if (raw) {
-    const primo = vicini[0] ? await datiGiornalieri(vicini[0].id).catch((e) => ({ errore: e.message })) : null;
+    const primo = vicini[0] ? await datiGiornalieri(vicini[0].id, true).catch((e) => ({ errore: e.message })) : null;
     return {
       totaleWfs: cacheFreat?.length ?? 0,
       esempioWfs: cacheFreat?.[0] ? JSON.stringify(cacheFreat[0]).slice(0, 600) : null,
