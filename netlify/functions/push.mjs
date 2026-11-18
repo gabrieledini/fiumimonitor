@@ -11,8 +11,14 @@ const json = (status, body) => new Response(JSON.stringify(body), { status, head
 const chiave = (endpoint) => createHash('sha256').update(endpoint).digest('hex');
 
 export default async (req) => {
-  const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env;
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return json(500, { errore: 'Chiavi VAPID non configurate su Netlify' });
+  // Le variabili si leggono sia da Netlify.env (functions v2) sia da process.env
+  const env = (k) => (globalThis.Netlify?.env?.get(k) ?? process.env[k] ?? '').trim();
+  const VAPID_PUBLIC_KEY = env('VAPID_PUBLIC_KEY'), VAPID_PRIVATE_KEY = env('VAPID_PRIVATE_KEY'), VAPID_SUBJECT = env('VAPID_SUBJECT');
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    const mancanti = ['VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY'].filter((k) => !env(k));
+    const simili = Object.keys(process.env).filter((k) => /vapid/i.test(k));
+    return json(500, { errore: 'Chiavi VAPID non configurate su Netlify', mancanti, variabiliSimiliTrovate: simili, contesto: process.env.CONTEXT || null });
+  }
   if (req.method === 'GET') return json(200, { publicKey: VAPID_PUBLIC_KEY });
   if (req.method !== 'POST') return json(405, { errore: 'Metodo non ammesso' });
 

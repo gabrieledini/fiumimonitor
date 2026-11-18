@@ -12,7 +12,8 @@ function riepilogo(livelli) {
 }
 
 export default async () => {
-  const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env;
+  const env = (k) => (globalThis.Netlify?.env?.get(k) ?? process.env[k] ?? '').trim();
+  const VAPID_PUBLIC_KEY = env('VAPID_PUBLIC_KEY'), VAPID_PRIVATE_KEY = env('VAPID_PRIVATE_KEY'), VAPID_SUBJECT = env('VAPID_SUBJECT');
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) { console.error('Chiavi VAPID mancanti'); return; }
   webpush.setVapidDetails(VAPID_SUBJECT || 'mailto:admin@example.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
