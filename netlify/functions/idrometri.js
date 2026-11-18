@@ -69,9 +69,10 @@ function parseTabella(html) {
     .filter((a) => /^TOS\d+$/i.test(a[0]) && a.length >= 6)
     .map((a) => {
       const [id, fiume, stazione, prov, zona] = a;
-      const dateIdx = a.findLastIndex((v, i) => i > 4 && DATA_TAB_RE.test(v));
-      const vals = a.slice(5, dateIdx > 0 ? dateIdx : undefined);
-      // Ordine colonne tabella CFR: liv.2, liv.1, livello, portata, Δh1, Δh3, Δh6
+      // Le 7 colonne numeriche stanno subito prima della data:
+      // liv.2, liv.1, livello, portata, Δh1, Δh3, Δh6, data (dopo la data ci sono altri campi)
+      const dateIdx = a.findIndex((v, i) => i > 4 && DATA_TAB_RE.test(v));
+      const vals = dateIdx >= 12 ? a.slice(dateIdx - 7, dateIdx) : [];
       const pos = vals.length === 7;
       return {
         id: id.toUpperCase(), fiume, stazione, prov: prov.toUpperCase(), zona,
