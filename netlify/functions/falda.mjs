@@ -1,6 +1,7 @@
 // GET /.netlify/functions/falda?luogo=viareggio        → ultimo dato di falda salvato
 // GET /.netlify/functions/falda?luogo=viareggio&raw=1  → anche le prove fatte sull'archivio (debug)
 // Se il dato manca o ha più di 6 ore avvia l'aggiornamento in background e risponde subito.
+// GET /.netlify/functions/falda?luogo=viareggio&forza=1 → riavvia subito l'aggiornamento
 import { getStore } from '@netlify/blobs';
 import { LUOGHI } from '../lib/lib-falda.mjs';
 
@@ -18,7 +19,9 @@ export default async (req) => {
   const giaAvviato = avvio && Date.now() - Date.parse(avvio.quando) < 10 * 60e3;
 
   let stato = salvato?.dati ? 'pronto' : 'in preparazione';
-  if (eta > VALIDITA && !giaAvviato) {
+  // senza dati validi riprova dopo 10 minuti; con ?forza=1 riparte subito
+  const validita = salvato?.dati ? VALIDITA : 10 * 60e3;
+  if (u.searchParams.get('forza') || (eta > validita && !giaAvviato)) {
     await store.setJSON(`${luogo}-avvio`, { quando: new Date().toISOString() });
     await fetch(`${u.origin}/.netlify/functions/falda-background?luogo=${luogo}`).catch(() => null); // risponde 202 subito
     if (!salvato?.dati) stato = 'in preparazione';
