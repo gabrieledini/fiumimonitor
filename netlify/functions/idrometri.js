@@ -139,13 +139,15 @@ const distKm = (a, b) => {
 
 let cacheFreat = null;
 async function freatimetriVicini(punto, quanti = 5) {
-  // solo i freatimetri entro ~30 km (bbox lon,lat in WFS 1.0.0), con cache finché la function resta calda
-  const bbox = `&bbox=${punto.lon - 0.4},${punto.lat - 0.3},${punto.lon + 0.4},${punto.lat + 0.3}`;
-  cacheFreat ||= JSON.parse(await scaricaUrl(WFS_FREAT + bbox)).features || [];
+  // Tutti i freatimetri (poche centinaia), in cache finché la function resta calda.
+  // Niente bbox: in WFS 1.0.0 verrebbe interpretato nel sistema di coordinate nativo del layer.
+  cacheFreat ||= JSON.parse(await scaricaUrl(WFS_FREAT)).features || [];
   const feats = cacheFreat;
   return feats.map((f) => {
     const p = f.properties || {};
-    const id = Object.values(p).map((v) => String(v ?? '').trim().toUpperCase()).find((v) => /^TOS\d+$/.test(v));
+    const kId = Object.keys(p).find((k) => /^(id_?stazione|cod(ice)?_?stazione|codice|cod|id)$/i.test(k));
+    const id = Object.values(p).map((v) => String(v ?? '').trim().toUpperCase()).find((v) => /^TOS\d+$/.test(v))
+      || (kId ? String(p[kId]).trim().toUpperCase() : null);
     let g = f.geometry?.coordinates;
     while (Array.isArray(g) && Array.isArray(g[0])) g = g[0];
     if (!id || !Array.isArray(g)) return null;
@@ -191,7 +193,12 @@ async function falda(cfg, raw) {
   const vicini = await freatimetriVicini(cfg);
   if (raw) {
     const primo = vicini[0] ? await datiGiornalieri(vicini[0].id).catch((e) => ({ errore: e.message })) : null;
-    return { vicini: vicini.map(({ proprieta, ...v }) => ({ ...v, proprieta })), datiPrimo: primo && { ...primo, serie: primo.serie?.slice(-5) } };
+    return {
+      totaleWfs: cacheFreat?.length ?? 0,
+      esempioWfs: cacheFreat?.[0] ? JSON.stringify(cacheFreat[0]).slice(0, 600) : null,
+      vicini,
+      datiPrimo: primo && { ...primo, serie: primo.serie?.slice(-5) },
+    };
   }
   const prove = await Promise.all(vicini.slice(0, 2).map((v) => datiGiornalieri(v.id).catch(() => null)));
   const i = prove.findIndex((d) => d?.serie?.length);
@@ -267,7 +274,11 @@ exports.handler = async (event) => {
     if (q.falda) {
       const cfg = RISCHIO[String(q.falda).toLowerCase()];
       if (!cfg) return json(400, { errore: `luogo non gestito: ${q.falda}` });
-      return json(200, { falda: await falda(cfg, q.raw) });
+      try {
+        return json(200, { falda: await falda(cfg, q.raw) });
+      } catch (e) {
+        return json(200, { falda: null, errore: e.message });
+      }
     }
     if (q.rischio) return json(200, await rischio(q.rischio, q.raw));
 
