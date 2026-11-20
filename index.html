@@ -109,6 +109,14 @@ footer a{color:var(--acqua)}
 .livello-zona{display:inline-block;font-size:13px;font-weight:700;padding:2px 10px;border-radius:4px;margin:0 0 6px;color:#fff;background:#5B6168}
 .livello-zona.verde{background:#1E7D45}.livello-zona.giallo{background:#F2C200;color:#1A1C1E}.livello-zona.arancione{background:#E67700;color:#1A1C1E}.livello-zona.rosso{background:#E3001B}
 button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px}
+.pulsanti{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pulsanti button{font:inherit;font-weight:700;font-size:15px;line-height:1.15;background:var(--carta);color:var(--rosso);border:2px solid var(--rosso);border-radius:4px;min-height:64px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;text-align:center}
+.pulsanti button svg{width:22px;height:22px;flex:none}
+.pulsanti button[aria-expanded="true"]{background:var(--rosso);color:#fff}
+.pulsanti button:disabled{opacity:.45;cursor:not-allowed}
+.pulsanti button:focus-visible{outline:3px solid var(--acqua);outline-offset:2px}
+.gira svg{animation:gira 1s linear infinite}
+@media (prefers-reduced-motion:reduce){.gira svg{animation:none}}
 .interruttore{display:grid;grid-template-columns:1fr 1fr;border:2px solid var(--rosso);border-radius:4px;overflow:hidden}
 .interruttore button{font:inherit;font-weight:700;font-size:16px;background:var(--carta);color:var(--rosso);border:0;min-height:46px;display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer;padding:6px 8px;line-height:1.15}
 .interruttore button+button{border-left:2px solid var(--rosso)}
@@ -147,19 +155,19 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       <label>Comune
         <select id="selLocalita" disabled><option value="">Caricamento elenco…</option></select>
       </label>
-      <button class="aggiorna" id="btnAggiorna" type="button" disabled>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
-        Aggiorna dati
-      </button>
-      <div class="interruttore" role="group" aria-label="Viste aggiuntive">
-      <button id="btnMappa" type="button" aria-expanded="false" aria-controls="sezMappa" disabled>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
-        Mappa
-      </button>
-      <button id="btnRischio" type="button" aria-expanded="false" aria-controls="sezRischio">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M3 21c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/></svg>
-        Rischio allagamento
-      </button>
+      <div class="pulsanti" role="group" aria-label="Azioni">
+        <button id="btnAggiorna" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+          <span>Aggiorna dati</span>
+        </button>
+        <button id="btnMappa" type="button" aria-expanded="false" aria-controls="sezMappa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+          <span>Mappa</span>
+        </button>
+        <button id="btnRischio" type="button" aria-expanded="false" aria-controls="sezRischio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M3 21c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/></svg>
+          <span>Rischio allagamento</span>
+        </button>
       </div>
     </div>
     <div class="ultimo" id="ultimo" aria-live="polite"></div>
@@ -172,9 +180,10 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
 
     <section id="sezRischio" hidden>
       <div class="rischio-testa">
-        <h2 style="margin-top:4px">Rischio allagamento – Viareggio</h2>
+        <h2 style="margin-top:4px" id="titoloRischio">Rischio allagamento</h2>
         <span class="badge" id="rischioStato">–</span>
       </div>
+      <p class="spiega" id="rischioQuota" style="color:var(--testo-2);margin:4px 0 0"></p>
       <p class="spiega" id="rischioTesto" style="color:var(--testo-2);margin:4px 0 0">Caricamento in corso…</p>
       <div class="tessere" id="rischioTessere"></div>
       <div class="pannello">
@@ -184,10 +193,11 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
           <small style="color:var(--testo-2)">Il livello a cui l’acqua è risalita in casa, in metri rispetto al piano campagna: 0 è la superficie, −0,50 è mezzo metro sotto. Resta salvato su questo dispositivo.</small>
         </div>
         <h3>Falda</h3><p class="spiega" id="faldaInfo" style="margin:0 0 4px;font-size:14px"></p><div class="mini"><canvas id="rFalda" aria-label="Andamento falda"></canvas></div>
-        <h3>Canale Burlamacca</h3><div class="mini"><canvas id="rCanale" aria-label="Andamento Burlamacca"></canvas></div>
+        <h3 id="titoloCanale">Corso d’acqua</h3><div class="mini"><canvas id="rCanale" aria-label="Andamento Burlamacca"></canvas></div>
         <h3>Mare – altezza onde (m)</h3><div class="mini"><canvas id="rMare" aria-label="Altezza delle onde"></canvas></div>
         <h3>Pioggia (mm/h)</h3><div class="mini"><canvas id="rPioggia" aria-label="Pioggia oraria"></canvas></div>
-        <p class="spiega" style="margin-top:12px">Ultime 48 ore, stesso asse dei tempi per vedere quando i fenomeni coincidono. Lo stato è un’indicazione calcolata dalla pagina, non un’allerta ufficiale.</p>
+        <p class="spiega" style="margin-top:12px">Ultime 48 ore, stesso asse dei tempi per vedere quando i fenomeni coincidono. Lo stato è un’indicazione calcolata dalla pagina, non un’allerta ufficiale. Pioggia e mare sono stime del modello Open-Meteo per le coordinate del comune.</p>
+        <p class="spiega" id="rischioMemoria" style="margin-top:6px"></p>
       </div>
     </section>
 
@@ -375,6 +385,7 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
     $('sezMappa').hidden = aperta;
     if (aperta) return;
     chiudiVista($('btnRischio'), 'sezRischio');
+    if (!tutte.length) { $('senzaCoord').textContent = 'Elenco delle stazioni non ancora caricato: riprova tra poco.'; return; }
     if (mappa) { mappa.invalidateSize(); evidenzia(); return; }
     try {
       await caricaLeaflet();
@@ -420,6 +431,61 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
     if (scelti.length) mappa.flyToBounds(L.latLngBounds(scelti).pad(0.5), { maxZoom: 12, duration: 0.6 });
   }
 
+  // ---------- Cache nel browser (resta finché non si pulisce la cache; "Aggiorna dati" la rinnova) ----------
+  const CACHE = 'idrometri:v1:';
+  function cacheLeggi(tipo, comune) {
+    try { const x = localStorage.getItem(`${CACHE}${tipo}:${comune}`); return x ? JSON.parse(x) : null; } catch (_) { return null; }
+  }
+  function cacheScrivi(tipo, comune, valore) {
+    const k = `${CACHE}${tipo}:${comune}`;
+    const v = JSON.stringify({ salvato: new Date().toISOString(), valore });
+    for (let i = 0; i < 30; i++) {
+      try { localStorage.setItem(k, v); return; } catch (_) {
+        // spazio esaurito: tolgo la voce più vecchia e riprovo
+        const chiavi = Object.keys(localStorage).filter((x) => x.startsWith(CACHE) && x !== k);
+        if (!chiavi.length) return;
+        let vecchia = chiavi[0], data = Infinity;
+        for (const c of chiavi) { let d = 0; try { d = Date.parse(JSON.parse(localStorage.getItem(c)).salvato); } catch (_) {} if (d < data) { data = d; vecchia = c; } }
+        localStorage.removeItem(vecchia);
+      }
+    }
+  }
+  const quando = (iso) => new Date(iso).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+  // "Rischio allagamento" non è cliccabile mentre si scaricano dati
+  let occupati = 0;
+  function occupato(delta) {
+    occupati = Math.max(0, occupati + delta);
+    $('btnRischio').disabled = occupati > 0;
+    btn.classList.toggle('gira', occupati > 0);
+  }
+
+  // Coordinate e quota del comune (Open-Meteo Geocoding), in cache senza scadenza
+  async function geoComune(c) {
+    const ca = cacheLeggi('geo', c);
+    if (ca) return ca.valore;
+    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(c)}&count=20&language=it&countryCode=IT`);
+    if (!r.ok) throw new Error(`geocoding HTTP ${r.status}`);
+    const ris = ((await r.json()).results || []).filter((x) => /toscana|tuscany/i.test(x.admin1 || ''));
+    const x = ris.find((y) => y.name.toLowerCase() === c.toLowerCase() && /^PPLA?\d?$|^PPLC$/.test(y.feature_code || ''))
+      || ris.find((y) => y.name.toLowerCase() === c.toLowerCase()) || ris[0];
+    if (!x) return null;
+    const g = { lat: x.latitude, lon: x.longitude, quota: x.elevation ?? null, nome: x.name };
+    cacheScrivi('geo', c, g);
+    return g;
+  }
+
+  // Pioggia oraria stimata dal modello per le coordinate del comune (mm/h in v2)
+  async function caricaPioggia(g) {
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&hourly=precipitation&past_days=2&forecast_days=1&timezone=GMT`);
+    if (!r.ok) throw new Error(`Open-Meteo HTTP ${r.status}`);
+    const h = (await r.json()).hourly || {};
+    const adesso = Date.now();
+    const serie = (h.time || []).map((t, i) => ({ t: t + ':00Z', v1: null, v2: h.precipitation?.[i] ?? null }))
+      .filter((p) => new Date(p.t).getTime() <= adesso && p.v2 !== null);
+    return serie.length ? { nome: 'stima Open-Meteo', serie } : null;
+  }
+
   // ---------- Rischio allagamento ----------
   const btnRischio = $('btnRischio');
   const CHIAVE_SOGLIA = 'sogliaFalda';
@@ -457,37 +523,62 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
   }
 
   // Mare al largo di Viareggio: altezza onde (v1) e livello del mare con marea e sovralzo (v2)
-  async function caricaMare() {
-    const url = 'https://marine-api.open-meteo.com/v1/marine?latitude=43.85&longitude=10.20'
+  // Mare: cella di mare più vicina al comune; oltre 15 km il comune non è considerato costiero
+  async function caricaMare(g) {
+    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${g.lat}&longitude=${g.lon}&cell_selection=sea`
       + '&hourly=wave_height,sea_level_height_msl&past_days=2&forecast_days=1&timezone=GMT';
     const r = await fetch(url);
-    if (!r.ok) throw new Error(`Open-Meteo HTTP ${r.status}`);
-    const h = (await r.json()).hourly || {};
+    if (!r.ok) return null;
+    const j = await r.json();
+    const dist = Math.hypot((j.latitude - g.lat) * 111, (j.longitude - g.lon) * 111 * Math.cos(g.lat * Math.PI / 180));
+    if (!Number.isFinite(dist) || dist > 15) return { costiero: false };
+    const h = j.hourly || {};
     const adesso = Date.now();
     const serie = (h.time || [])
       .map((t, i) => ({ t: t + ':00Z', v1: h.wave_height?.[i] ?? null, v2: h.sea_level_height_msl?.[i] ?? null }))
       .filter((p) => new Date(p.t).getTime() <= adesso && (p.v1 !== null || p.v2 !== null));
-    return serie.length ? { nome: 'Open-Meteo Marine, al largo di Viareggio', serie } : null;
+    return serie.length ? { nome: `mare al largo di ${g.nome}`, serie, costiero: true } : null;
   }
 
-  async function caricaRischio() {
+  async function caricaRischio(forza = false) {
+    const c = sel.value;
+    $('titoloRischio').textContent = c ? `Rischio allagamento – ${c}` : 'Rischio allagamento';
+    if (!c) { $('rischioTesto').textContent = 'Scegli prima un comune dal menu in alto.'; return; }
+    if (!forza) {
+      const ca = cacheLeggi('rischio', c);
+      if (ca) { datiRischio = ca.valore; disegnaRischio(); $('rischioMemoria').textContent = `Dati salvati il ${quando(ca.salvato)}. Premi “Aggiorna dati” per scaricarli di nuovo.`; return; }
+    }
+    occupato(+1);
     $('rischioTesto').textContent = 'Caricamento in corso…';
     try {
-      const [r, mare, falda] = await Promise.all([
-        fetch(`${ENDPOINT}?rischio=viareggio&t=${Date.now()}`, { cache: 'no-store' }),
-        caricaMare().catch(() => null),
-        fetch(`/.netlify/functions/falda?luogo=viareggio&t=${Date.now()}`, { cache: 'no-store' })
-          .then((x) => (x.ok ? x.json() : null)).catch(() => null),
+      const g = await geoComune(c).catch(() => null);
+      const giaCaricate = dati && dati._comune === c ? dati.stazioni : null;
+      const [stazioni, mare, pioggia, falda] = await Promise.all([
+        giaCaricate || fetch(`${ENDPOINT}?ids=${encodeURIComponent(localita.get(c).map((x) => x.id).join(','))}&t=${Date.now()}`, { cache: 'no-store' })
+          .then((x) => x.json()).then((x) => x.stazioni || []).catch(() => []),
+        g ? caricaMare(g).catch(() => null) : null,
+        g ? caricaPioggia(g).catch(() => null) : null,
+        g ? fetch(`/.netlify/functions/falda?lat=${g.lat}&lon=${g.lon}&t=${Date.now()}`, { cache: 'no-store' }).then((x) => (x.ok ? x.json() : null)).catch(() => null) : null,
       ]);
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
-      if (mare) j.mare = mare; // onde e livello del mare da Open-Meteo Marine
-      j.falda = falda?.falda || null;   // chiamata separata: se è lenta o fallisce non blocca il resto
-      j.faldaInPreparazione = falda?.stato === 'in preparazione';
-      datiRischio = j;
-      disegnaRischio();
+      // corso d'acqua del comune: la stazione con soglie, altrimenti la prima con dati
+      const s0 = stazioni.find((s) => s.liv1 !== null && s.serie?.length) || stazioni.find((s) => s.serie?.length);
+      datiRischio = {
+        comune: c, geo: g,
+        canale: s0 ? { id: s0.id, nome: `${s0.fiume} – ${s0.stazione}`, liv1: s0.liv1, liv2: s0.liv2, serie: s0.serie.map((p) => ({ t: p.t, v1: p.l })) } : null,
+        mare: mare?.serie ? mare : null,
+        mareNonCostiero: mare?.costiero === false,
+        pioggia,
+        falda: falda?.falda || null,
+        faldaInPreparazione: falda?.stato === 'in preparazione',
+        aggiornato: new Date().toISOString(),
+      };
+      if (!datiRischio.faldaInPreparazione) cacheScrivi('rischio', c, datiRischio);
+      $('rischioMemoria').textContent = '';
+      if (sel.value === c) disegnaRischio();
     } catch (e) {
       $('rischioTesto').textContent = `Dati non caricati: ${e.message}.`;
+    } finally {
+      occupato(-1);
     }
   }
 
@@ -534,21 +625,30 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
 
     const motivi = [];
     if (segnali.falda) motivi.push('falda oltre la tua soglia');
-    if (segnali.canale) motivi.push('Burlamacca alto o in rapida crescita');
+    if (segnali.canale) motivi.push(`${d.canale.nome} alto o in rapida crescita`);
     if (segnali.mare) motivi.push('mare molto mosso o alto, il deflusso dei canali rallenta');
     if (segnali.pioggia) motivi.push(`${pioggia24} mm di pioggia in 24 ore`);
-    const mancanti = ['falda', 'canale', 'mare', 'pioggia'].filter((k) => !d[k]);
+    const mancanti = ['falda', 'canale', 'mare', 'pioggia'].filter((k) => !d[k] && !(k === 'mare' && d.mareNonCostiero) && !(k === 'falda' && d.faldaInPreparazione));
     $('rischioTesto').textContent = (motivi.length ? `Segnali: ${motivi.join(', ')}.` : 'Nessun segnale rilevante.')
       + (soglia === null && d.falda ? ' Imposta la tua soglia di falda per includerla nel calcolo.' : '')
       + (mancanti.length ? ` Dati non disponibili: ${mancanti.join(', ')}.` : '');
 
     const tessera = (titolo, val, nota, on) => `<div class="tessera${on ? ' on' : ''}"><span>${titolo}</span><b>${val}</b><small>${nota}</small></div>`;
     $('rischioTessere').innerHTML =
-      tessera('Falda', falda !== null ? `${fmt(falda)} m` : '–', falda !== null ? `dal piano campagna, ${fmtSegno(dFalda)} m in 7 gg, dato del ${dataFalda}` : 'non disponibile', segnali.falda) +
-      tessera('Burlamacca', d.canale ? `${fmt(ultimo(v.canale))} m` : '–', d.canale ? `${fmtSegno(dCanale)} m in 6 h` : 'non disponibile', segnali.canale) +
-      tessera('Onde', d.mare ? `${fmt(ultimo(v.mare), 1)} m` : '–', d.mare ? (livelloMare !== null ? `livello mare ${fmtSegno(livelloMare)} m` : 'Open-Meteo Marine') : 'non disponibile', segnali.mare) +
+      tessera('Falda', falda !== null ? `${fmt(falda)} m` : '–', falda !== null
+        ? `dal piano campagna${d.falda.quota !== null && d.falda.quota !== undefined ? ` (terreno a ${fmt(d.falda.quota)} m s.l.m.)` : ''}, ${fmtSegno(dFalda)} m in 7 gg, dato del ${dataFalda}`
+        : d.faldaInPreparazione ? 'in preparazione' : 'non disponibile', segnali.falda) +
+      tessera(d.canale ? esc(d.canale.nome) : 'Corso d’acqua', d.canale ? `${fmt(ultimo(v.canale))} m` : '–', d.canale ? `${fmtSegno(dCanale)} m in 6 h` : 'nessuna stazione con dati', segnali.canale) +
+      tessera('Onde', d.mare ? `${fmt(ultimo(v.mare), 1)} m` : '–', d.mare ? (livelloMare !== null ? `livello mare ${fmtSegno(livelloMare)} m` : esc(d.mare.nome)) : d.mareNonCostiero ? 'comune non costiero' : 'non disponibile', segnali.mare) +
       tessera('Pioggia 24 h', d.pioggia ? `${pioggia24} mm` : '–', d.pioggia ? esc(d.pioggia.nome) : 'non disponibile', segnali.pioggia);
 
+    $('titoloCanale').textContent = d.canale ? d.canale.nome : 'Corso d’acqua';
+    $('rischioQuota').textContent = d.geo?.quota !== null && d.geo?.quota !== undefined
+      ? `Quota del terreno a ${d.comune}: circa ${fmt(d.geo.quota, 0)} m sul livello del mare (centro del comune).` : '';
+    $('faldaInfo').textContent = d.falda
+      ? `Freatimetro ${d.falda.nome}, a ${fmt(d.falda.km, 1)} km${d.falda.quota !== null && d.falda.quota !== undefined ? `, terreno a ${fmt(d.falda.quota)} m s.l.m. (falda a circa ${fmt(d.falda.quota + falda)} m s.l.m.)` : ''}. Livello giornaliero rispetto al piano campagna (0 = superficie), ultimi 30 giorni.`
+        + (d.falda.massimo ? ` Massimo registrato dal ${new Date(d.falda.dal).getFullYear()}: ${fmt(d.falda.massimo.v)} m il ${new Date(d.falda.massimo.d).toLocaleDateString('it-IT')}.` : '')
+      : d.faldaInPreparazione ? 'Dati di falda in preparazione dall’archivio regionale: riprova tra qualche minuto con “Aggiorna dati”.' : '';
     if (!window.Chart) return;
     const mini = (id, dati, col, linee = [], tipo = 'line', opz = {}) => {
       const etichette_ = opz.labels || etichette;
@@ -578,10 +678,6 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       reverse: sogg,
       titoloY: sogg ? 'm sotto p.c.' : 'm dal p.c.',
     });
-    $('faldaInfo').textContent = d.falda
-      ? `Freatimetro ${d.falda.nome}, a ${fmt(d.falda.km, 1)} km. Livello giornaliero rispetto al piano campagna (0 = superficie), ultimi 30 giorni.`
-        + (d.falda.massimo ? ` Massimo registrato dal ${new Date(d.falda.dal).getFullYear()}: ${fmt(d.falda.massimo.v)} m il ${new Date(d.falda.massimo.d).toLocaleDateString('it-IT')}.` : '')
-      : d.faldaInPreparazione ? 'Dati di falda in preparazione dall’archivio regionale: riprova tra qualche minuto con “Aggiorna dati”.' : '';
     mini('rCanale', v.canale, css('--acqua'), d.canale ? [[d.canale.liv1, '1° livello', '--soglia1'], [d.canale.liv2, '2° livello', '--soglia2']] : []);
     mini('rMare', v.mare, css('--acqua'), [[1.25, 'Molto mosso', '--soglia1']]);
     mini('rPioggia', v.pioggia, css('--acqua'), [], 'bar');
@@ -591,13 +687,13 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
     const aperta = btnRischio.getAttribute('aria-expanded') === 'true';
     btnRischio.setAttribute('aria-expanded', String(!aperta));
     $('sezRischio').hidden = aperta;
-    if (!aperta) { chiudiVista(btnMappa, 'sezMappa'); caricaRischio(); }
+    if (!aperta) { chiudiVista(btnMappa, 'sezMappa'); caricaRischio(false); }
     aggiornaPulsante();
   });
 
   // "Aggiorna dati" ricarica la località scelta e, se aperto, il rischio allagamento
   function aggiornaPulsante() {
-    btn.disabled = !sel.value && btnRischio.getAttribute('aria-expanded') !== 'true';
+    btn.disabled = false; // sempre cliccabile
   }
 
   // ---------- Allerta meteo ufficiale ----------
@@ -611,9 +707,14 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
   const NOME_LIVELLO = { verde: 'Verde – nessuna allerta', giallo: 'Giallo – vigilanza', arancione: 'Arancione – allerta', rosso: 'Rosso – allerta' };
   let datiAllerta = null, giornoAllerta = 'oggi';
 
-  async function caricaAllerta() {
+  async function caricaAllerta(forza = false) {
     const b = $('btnAllerta');
     if (!sel.value) { $('allertaContenuto').hidden = false; $('allertaStato').textContent = 'Scegli prima un comune dal menu in alto.'; return; }
+    if (!forza) {
+      const ca = cacheLeggi('allerta', sel.value);
+      if (ca) { $('allertaContenuto').hidden = false; datiAllerta = ca.valore; disegnaAllerta(); $('allertaStato').insertAdjacentText('beforeend', ` Dati salvati il ${quando(ca.salvato)}: premi “Aggiorna dati” per rinnovarli.`); return; }
+    }
+    occupato(+1);
     b.disabled = true; b.classList.add('gira');
     $('allertaContenuto').hidden = false;
     $('allertaStato').textContent = 'Caricamento del bollettino…';
@@ -622,11 +723,13 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
       datiAllerta = j;
+      cacheScrivi('allerta', sel.value, j);
       disegnaAllerta();
     } catch (e) {
       $('allertaStato').textContent = `Bollettino non caricato: ${e.message}.`;
     } finally {
       b.disabled = false; b.classList.remove('gira');
+      occupato(-1);
     }
   }
 
@@ -655,7 +758,7 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       </a>`).join('');
   }
 
-  $('btnAllerta').addEventListener('click', caricaAllerta);
+  $('btnAllerta').addEventListener('click', () => caricaAllerta(false));
   document.querySelectorAll('.allerta-giorni button').forEach((x) => x.addEventListener('click', () => {
     giornoAllerta = x.dataset.giorno;
     if (datiAllerta) disegnaAllerta();
@@ -773,17 +876,30 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
   }
 
   // ---------- Dati località ----------
-  async function caricaDati() {
+  async function caricaDati(forza = false) {
     const k = sel.value;
     if (!k) return;
-    btn.disabled = true; btn.classList.add('gira');
-    $('ultimo').textContent = 'Caricamento dati…';
     messaggio('');
+    if (!forza) {
+      const ca = cacheLeggi('dati', k);
+      if (ca) {
+        dati = ca.valore;
+        $('iniziale').hidden = true;
+        $('ultimo').textContent = `Dati salvati il ${quando(ca.salvato)}. Premi “Aggiorna dati” per scaricarli di nuovo.`;
+        if (dati.stazioni?.length) render();
+        return;
+      }
+    }
+    occupato(+1);
+    $('ultimo').textContent = 'Caricamento dati…';
     try {
       const r = await fetch(`${ENDPOINT}?ids=${encodeURIComponent(localita.get(k).map((x) => x.id).join(','))}&t=${Date.now()}`, { cache: 'no-store' });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.errore || `errore HTTP ${r.status}`);
+      j._comune = k;
+      if (sel.value !== k) return; // nel frattempo è stato scelto un altro comune
       dati = j;
+      cacheScrivi('dati', k, j);
       $('iniziale').hidden = true;
       if (!j.stazioni.length) {
         $('risultati').hidden = true;
@@ -797,7 +913,7 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
       messaggio(`Dati non caricati: ${e.message}.`);
       $('ultimo').textContent = '';
     } finally {
-      btn.classList.remove('gira'); aggiornaPulsante();
+      occupato(-1);
     }
   }
 
@@ -949,15 +1065,18 @@ button.aggiorna{width:100%;justify-content:center;min-height:48px;font-size:17px
 
   sel.addEventListener('change', () => {
     aggiornaPulsante(); evidenzia(); aggiornaPush();
-    if (sel.value) caricaDati();
-    if (datiAllerta && sel.value) caricaAllerta();
+    if (sel.value) caricaDati(false);
+    if (sel.value && btnRischio.getAttribute('aria-expanded') === 'true') caricaRischio(false);
+    if (datiAllerta && sel.value) caricaAllerta(false);
   });
   aggiornaPush();
   btnMappa.addEventListener('click', apriMappa);
+  // "Aggiorna dati": scarica di nuovo tutto il comune scelto, ignorando la cache
   btn.addEventListener('click', () => {
-    if (sel.value) caricaDati();
-    if (btnRischio.getAttribute('aria-expanded') === 'true') caricaRischio();
-    if (datiAllerta) caricaAllerta();
+    if (!sel.value) { messaggio('Scegli un comune dal menu per aggiornare i dati.'); return; }
+    caricaDati(true);
+    if (btnRischio.getAttribute('aria-expanded') === 'true') caricaRischio(true);
+    if (datiAllerta) caricaAllerta(true);
   });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => dati?.stazioni.length && render());
   caricaElenco();

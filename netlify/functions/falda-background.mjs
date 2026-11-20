@@ -1,18 +1,20 @@
-// Background function (fino a 15 minuti): legge l'archivio SIR e salva il risultato su Blobs.
-// Viene avviata da functions/falda.mjs quando il dato in cache è vecchio o assente.
+// Background function (fino a 15 minuti): legge il CSV di un freatimetro e lo salva su Blobs.
+// Avviata da functions/falda.mjs con ?id=TOS… quando il dato in cache è vecchio o assente.
 import { getStore } from '@netlify/blobs';
-import { calcolaFalda, LUOGHI } from '../lib/lib-falda.mjs';
+import { datiFreatimetro } from '../lib/lib-falda.mjs';
 
 export default async (req) => {
-  const luogo = new URL(req.url).searchParams.get('luogo') || 'viareggio';
-  if (!LUOGHI[luogo]) return;
+  const id = (new URL(req.url).searchParams.get('id') || '').toUpperCase();
+  if (!/^TOS\d+$/.test(id)) return;
   const store = getStore('falda');
+  const elenco = (await store.get('elenco', { type: 'json' }))?.stazioni || [];
+  const st = elenco.find((x) => x.id === id) || { id, nome: id, comune: '', quota: null };
   try {
-    const r = await calcolaFalda(luogo);
-    await store.setJSON(luogo, { ...r, aggiornato: new Date().toISOString() });
-    console.log(`falda ${luogo}: ${r.dati ? r.dati.serie.length + ' giorni da ' + r.dati.id : 'nessun dato'}`);
+    const { dati, prova } = await datiFreatimetro(st);
+    await store.setJSON(id, { dati, prova, aggiornato: new Date().toISOString() });
+    console.log(`falda ${id}: ${dati ? dati.serie.length + ' giorni' : 'nessun dato'} (${prova.ms} ms)`);
   } catch (e) {
-    await store.setJSON(luogo, { dati: null, errore: e.message, aggiornato: new Date().toISOString() });
-    console.error(`falda ${luogo}: ${e.message}`);
+    await store.setJSON(id, { dati: null, errore: e.message, aggiornato: new Date().toISOString() });
+    console.error(`falda ${id}: ${e.message}`);
   }
 };

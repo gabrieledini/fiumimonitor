@@ -1,32 +1,43 @@
-// GET /.netlify/functions/falda?luogo=viareggio        → ultimo dato di falda salvato
-// GET /.netlify/functions/falda?luogo=viareggio&raw=1  → anche le prove fatte sull'archivio (debug)
-// Se il dato manca o ha più di 6 ore avvia l'aggiornamento in background e risponde subito.
-// GET /.netlify/functions/falda?luogo=viareggio&forza=1 → riavvia subito l'aggiornamento
+// GET /.netlify/functions/falda?lat=43.87&lon=10.25          → dati del freatimetro più vicino (dalla cache)
+// GET /.netlify/functions/falda?lat=…&lon=…&raw=1            → anche diagnostica
+// GET /.netlify/functions/falda?lat=…&lon=…&forza=1          → riavvia subito la lettura in background
+// Il dato viene letto da falda-background e conservato 6 ore; senza dati validi si riprova dopo 10 minuti.
 import { getStore } from '@netlify/blobs';
-import { LUOGHI } from '../lib/lib-falda.mjs';
+import { elencoFreatimetri, km } from '../lib/lib-falda.mjs';
 
-const VALIDITA = 6 * 3600e3;
 const json = (body) => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 
 export default async (req) => {
   const u = new URL(req.url);
-  const luogo = u.searchParams.get('luogo') || 'viareggio';
-  if (!LUOGHI[luogo]) return json({ falda: null, errore: `luogo non gestito: ${luogo}` });
+  const punto = { lat: parseFloat(u.searchParams.get('lat')), lon: parseFloat(u.searchParams.get('lon')) };
+  if (!Number.isFinite(punto.lat) || !Number.isFinite(punto.lon)) return json({ falda: null, errore: 'lat e lon obbligatori' });
   const store = getStore('falda');
-  const salvato = await store.get(luogo, { type: 'json' });
-  const avvio = await store.get(`${luogo}-avvio`, { type: 'json' });
-  const eta = salvato ? Date.now() - Date.parse(salvato.aggiornato) : Infinity;
-  const giaAvviato = avvio && Date.now() - Date.parse(avvio.quando) < 10 * 60e3;
 
-  let stato = salvato?.dati ? 'pronto' : 'in preparazione';
-  // senza dati validi riprova dopo 10 minuti; con ?forza=1 riparte subito
-  const validita = salvato?.dati ? VALIDITA : 10 * 60e3;
-  if (u.searchParams.get('forza') || (eta > validita && !giaAvviato)) {
-    await store.setJSON(`${luogo}-avvio`, { quando: new Date().toISOString() });
-    await fetch(`${u.origin}/.netlify/functions/falda-background?luogo=${luogo}`).catch(() => null); // risponde 202 subito
-    if (!salvato?.dati) stato = 'in preparazione';
+  // elenco freatimetri in cache per 7 giorni
+  let elenco = await store.get('elenco', { type: 'json' });
+  if (!elenco || Date.now() - Date.parse(elenco.aggiornato) > 7 * 86400e3) {
+    try {
+      elenco = { stazioni: await elencoFreatimetri(), aggiornato: new Date().toISOString() };
+      await store.setJSON('elenco', elenco);
+    } catch (e) {
+      if (!elenco) return json({ falda: null, errore: `elenco freatimetri non disponibile: ${e.message}` });
+    }
   }
-  const body = { falda: salvato?.dati || null, stato, aggiornato: salvato?.aggiornato || null };
-  if (u.searchParams.get('raw')) Object.assign(body, { prove: salvato?.prove || null, vicini: salvato?.vicini || null, errore: salvato?.errore || null, avvio });
+  const st = elenco.stazioni.map((s) => ({ ...s, km: km(punto, s) })).sort((a, b) => a.km - b.km)[0];
+  if (!st) return json({ falda: null, errore: 'nessun freatimetro' });
+
+  const salvato = await store.get(st.id, { type: 'json' });
+  const avvio = await store.get(`${st.id}-avvio`, { type: 'json' });
+  const eta = salvato ? Date.now() - Date.parse(salvato.aggiornato) : Infinity;
+  const validita = salvato?.dati ? 6 * 3600e3 : 10 * 60e3;
+  const giaAvviato = avvio && Date.now() - Date.parse(avvio.quando) < 10 * 60e3;
+  if (u.searchParams.get('forza') || (eta > validita && !giaAvviato)) {
+    await store.setJSON(`${st.id}-avvio`, { quando: new Date().toISOString() });
+    await fetch(`${u.origin}/.netlify/functions/falda-background?id=${st.id}`).catch(() => null);
+  }
+
+  const falda = salvato?.dati ? { ...salvato.dati, km: st.km, quota: st.quota } : null;
+  const body = { falda, stazione: { id: st.id, nome: st.nome, comune: st.comune, quota: st.quota, km: st.km }, stato: falda ? 'pronto' : 'in preparazione', aggiornato: salvato?.aggiornato || null };
+  if (u.searchParams.get('raw')) Object.assign(body, { prova: salvato?.prova || null, errore: salvato?.errore || null, avvio });
   return json(body);
 };
